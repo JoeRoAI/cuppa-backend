@@ -35,15 +35,33 @@ export const createCheckIn = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Handle special case for "home" check-ins
+    let actualShopId: mongoose.Types.ObjectId;
+    
+    if (shopId === 'home') {
+      // Create a special ObjectId for home check-ins or use a default one
+      // Using a consistent ObjectId for all home check-ins
+      actualShopId = new mongoose.Types.ObjectId('000000000000000000000001');
+    } else {
+      // Validate that shopId is a valid ObjectId
+      if (!mongoose.Types.ObjectId.isValid(shopId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid shop ID format',
+        });
+      }
+      actualShopId = new mongoose.Types.ObjectId(shopId);
+    }
+
     // Create check-in document
     const checkInData = {
       userId,
-      shopId: new mongoose.Types.ObjectId(shopId),
+      shopId: actualShopId,
       coffeeId: req.body.coffeeId ? new mongoose.Types.ObjectId(req.body.coffeeId) : undefined,
       purchasedItem: req.body.purchasedItem,
       notes: req.body.notes,
       images: req.body.images || [],
-      location: req.body.location,
+      location: req.body.location || (shopId === 'home' ? { type: 'Point', coordinates: [0, 0], address: 'Home' } : undefined),
       brewMethod: req.body.brewMethod,
       tags: req.body.tags || [],
       isPublic: req.body.isPublic !== undefined ? req.body.isPublic : true,
@@ -64,11 +82,12 @@ export const createCheckIn = async (req: AuthRequest, res: Response) => {
           checkInId: checkIn._id,
           brewMethod: checkIn.brewMethod,
           tags: checkIn.tags,
+          isHomeCheckIn: shopId === 'home',
         },
       });
     }
 
-    logger.info(`User ${userId} checked in to shop ${shopId}`);
+    logger.info(`User ${userId} checked in to ${shopId === 'home' ? 'home' : `shop ${shopId}`}`);
 
     res.status(201).json({
       success: true,

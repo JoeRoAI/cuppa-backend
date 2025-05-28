@@ -7,6 +7,7 @@ import {
   deleteCoffee,
   getCoffeeByBarcode,
   bulkBarcodeLookup,
+  getRecommendedCoffees,
 } from '../controllers/coffee.controller';
 import { protect, authorize } from '../middleware/auth.middleware';
 
@@ -14,6 +15,9 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getCoffees);
+
+// Specific routes (must come before /:id route)
+router.get('/recommended', getRecommendedCoffees);
 
 // Barcode lookup routes
 router.get('/barcode/:code', getCoffeeByBarcode);

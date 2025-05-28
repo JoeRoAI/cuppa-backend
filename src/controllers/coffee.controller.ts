@@ -644,3 +644,97 @@ export const bulkBarcodeLookup = async (
     });
   }
 };
+
+/**
+ * @desc    Get recommended coffees
+ * @route   GET /api/coffee/recommended
+ * @access  Public
+ */
+export const getRecommendedCoffees = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Handle mock database mode
+    if (usingMockDatabase) {
+      // Return mock recommended coffees
+      const mockRecommendedCoffees = [
+        {
+          _id: 'rec1',
+          name: 'Ethiopian Yirgacheffe',
+          brand: 'Blue Bottle Coffee',
+          roastLevel: 'Light',
+          origin: { country: 'Ethiopia', region: 'Yirgacheffe' },
+          flavorNotes: ['Floral', 'Citrus', 'Tea-like'],
+          prices: [{ amount: 18.95, size: '12oz', unit: 'bag' }],
+          categories: ['Single Origin', 'Light Roast'],
+          rating: 4.8,
+          description: 'A bright and floral coffee with citrus notes',
+          imageUrl: '/images/coffee-placeholder.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          _id: 'rec2',
+          name: 'Colombian Supremo',
+          brand: 'Stumptown Coffee',
+          roastLevel: 'Medium',
+          origin: { country: 'Colombia', region: 'Huila' },
+          flavorNotes: ['Chocolate', 'Caramel', 'Nutty'],
+          prices: [{ amount: 16.50, size: '12oz', unit: 'bag' }],
+          categories: ['Single Origin', 'Medium Roast'],
+          rating: 4.6,
+          description: 'A well-balanced coffee with chocolate and caramel notes',
+          imageUrl: '/images/coffee-placeholder.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          _id: 'rec3',
+          name: 'House Blend',
+          brand: 'Intelligentsia Coffee',
+          roastLevel: 'Medium-Dark',
+          origin: { country: 'Blend', region: 'Various' },
+          flavorNotes: ['Rich', 'Smooth', 'Balanced'],
+          prices: [{ amount: 15.00, size: '12oz', unit: 'bag' }],
+          categories: ['Blend', 'Medium-Dark Roast'],
+          rating: 4.4,
+          description: 'A rich and smooth house blend perfect for everyday drinking',
+          imageUrl: '/images/coffee-placeholder.jpg',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      res.status(200).json({
+        success: true,
+        count: mockRecommendedCoffees.length,
+        data: mockRecommendedCoffees,
+      });
+      return;
+    }
+
+    // For real database - get highly rated coffees or featured coffees
+    const recommendedCoffees = await Coffee.find({
+      $or: [
+        { rating: { $gte: 4.5 } },
+        { categories: { $in: ['Featured', 'Popular'] } },
+      ],
+    })
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(6);
+
+    res.status(200).json({
+      success: true,
+      count: recommendedCoffees.length,
+      data: recommendedCoffees,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error while retrieving recommended coffees',
+      error: error.message,
+    });
+  }
+};

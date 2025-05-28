@@ -9,11 +9,11 @@ import { protect } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// All activity feed routes require authentication
-router.use(protect);
-
-// Get current user's activity feed
+// Public activity feed (shows general activity or mock data)
 router.get('/', ActivityFeedController.getFeed);
+
+// Protected routes require authentication
+router.use(protect);
 
 // Get activity feed for a specific user
 router.get('/user/:userId', ActivityFeedController.getUserProfileFeed);
