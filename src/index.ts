@@ -142,6 +142,7 @@ app.get('/cors-test', (req: Request, res: Response) => {
     message: 'CORS is working!',
     origin: req.headers.origin || 'no-origin',
     timestamp: new Date().toISOString(),
+    deployTime: 'Force redeploy at 2025-01-28 16:15 UTC',
     headers: req.headers,
   });
 });
