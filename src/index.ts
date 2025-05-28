@@ -1,0 +1,155 @@
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import passport from 'passport';
+import session from 'express-session';
+import path from 'path';
+import { createServer } from 'http';
+import { connectDB, usingMockDatabase } from './config/db';
+import config from './config/config';
+import configurePassport from './config/passport';
+import WebSocketService from './services/websocket.service';
+
+// Import routes
+import authRoutes from './routes/auth.routes';
+import profileRoutes from './routes/profile.routes';
+import coffeeRoutes from './routes/coffee.routes';
+import integrationRoutes from './routes/integration.routes';
+import shopifyRoutes from './routes/shopify.routes';
+import shopifyAuthRoutes from './routes/shopify-auth.routes';
+import shopifyWebhookRoutes from './routes/shopify-webhook.routes';
+import productSyncRoutes from './routes/product-sync.routes';
+import dataCollectionRoutes from './routes/dataCollection.routes';
+import recommendationRoutes from './routes/recommendation.routes';
+import socialConnectionRoutes from './routes/social-connection.routes';
+import checkinRoutes from './routes/checkin.routes';
+import ratingRoutes from './routes/rating.routes';
+import educationRoutes from './routes/education.routes';
+import imageRoutes from './routes/image.routes';
+import tasteProfileRoutes from './routes/taste-profile.routes';
+import activityFeedRoutes from './routes/activity-feed.routes';
+import engagementRoutes from './routes/engagement.routes';
+import privacySettingsRoutes from './routes/privacy-settings.routes';
+import notificationRoutes from './routes/notification.routes';
+// import userRoutes from './routes/user.routes';
+
+// Import initialization functions
+import { initializeSync } from './controllers/product-sync.controller';
+
+// Initialize Express app
+const app = express();
+
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Middleware
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      'http://localhost:3004',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Configure session for Passport
+// Note: For a production app, you'd want to use a more robust session store
+app.use(
+  session({
+    secret: config.JWT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+// Initialize Passport and restore authentication state from session if any
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Configure Passport strategies
+configurePassport();
+
+// Serve static files for uploaded images
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+// Routes
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    message: 'Cuppa API is running',
+    env: config.NODE_ENV,
+    version: '1.0.0',
+    mockDatabase: usingMockDatabase,
+  });
+});
+
+// Mount routers
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/coffee', coffeeRoutes);
+app.use('/api/integration', integrationRoutes);
+app.use('/api/shopify', shopifyRoutes);
+app.use('/api/shopify/auth', shopifyAuthRoutes);
+app.use('/api/shopify/webhook', shopifyWebhookRoutes);
+app.use('/api/product-sync', productSyncRoutes);
+app.use('/api/data', dataCollectionRoutes);
+app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/social', socialConnectionRoutes);
+app.use('/api', checkinRoutes);
+app.use('/api/ratings', ratingRoutes);
+app.use('/api/education', educationRoutes);
+app.use('/api/images', imageRoutes);
+app.use('/api/taste-profile', tasteProfileRoutes);
+app.use('/api/activity-feed', activityFeedRoutes);
+app.use('/api/engagement', engagementRoutes);
+app.use('/api/privacy-settings', privacySettingsRoutes);
+app.use('/api/notifications', notificationRoutes);
+// app.use('/api/users', userRoutes);
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'An unknown error occurred',
+  });
+});
+
+// Start the server
+const startServer = async () => {
+  // Connect to MongoDB
+  await connectDB();
+
+  // Initialize product synchronization
+  await initializeSync();
+
+  // Initialize WebSocket service
+  WebSocketService.initialize(httpServer);
+
+  // Use PORT from config file instead of environment variable defaulting to 3000
+  const port = process.env.PORT || config.PORT;
+  
+  try {
+    httpServer.listen(port, () => {
+      console.log(`Server running in ${config.NODE_ENV} mode on port ${port}`);
+      console.log(`WebSocket service initialized and ready for connections`);
+    });
+  } catch (err) {
+    console.error(`Could not start server on port ${port}:`, err);
+    process.exit(1);
+  }
+};
+
+startServer().catch((err) => console.error('Server startup error:', err));
+
+// Export for testing
+export default app;
