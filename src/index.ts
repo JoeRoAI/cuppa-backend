@@ -45,43 +45,22 @@ const httpServer = createServer(app);
 // Middleware
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      const allowedOrigins = process.env.NODE_ENV === 'production' 
-        ? [
-            'https://v0-cuppa-onboarding-design.vercel.app',
-            'https://cuppa-frontend.vercel.app',
-            'https://cuppa.vercel.app',
-            'https://cuppa.app',
-            'https://www.cuppa.app',
-          ]
-        : [
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'http://localhost:3002',
-            'http://localhost:3003',
-            'http://localhost:3004',
-            'http://localhost:3005',
-          ];
-      
-      // Check if origin is in allowed list
-      const isAllowed = allowedOrigins.includes(origin);
-      
-      // Also allow any Vercel preview deployments in production
-      const isVercelPreview = process.env.NODE_ENV === 'production' && 
-                             origin.match(/^https:\/\/.*\.vercel\.app$/);
-      
-      if (isAllowed || isVercelPreview) {
-        console.log(`✅ CORS: Allowing origin: ${origin}`);
-        callback(null, true);
-      } else {
-        console.log(`❌ CORS: Blocking origin: ${origin}`);
-        console.log(`📋 CORS: Allowed origins:`, allowedOrigins);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: process.env.NODE_ENV === 'production' 
+      ? [
+          'https://v0-cuppa-onboarding-design.vercel.app',
+          'https://cuppa-frontend.vercel.app',
+          'https://cuppa.vercel.app',
+          'https://cuppa.app',
+          'https://www.cuppa.app',
+        ]
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://localhost:3002',
+          'http://localhost:3003',
+          'http://localhost:3004',
+          'http://localhost:3005',
+        ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
