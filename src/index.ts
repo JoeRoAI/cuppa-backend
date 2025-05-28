@@ -135,6 +135,17 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// CORS test endpoint
+app.get('/cors-test', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    message: 'CORS is working!',
+    origin: req.headers.origin || 'no-origin',
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+  });
+});
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
