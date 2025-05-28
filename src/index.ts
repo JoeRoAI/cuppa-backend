@@ -45,22 +45,42 @@ const httpServer = createServer(app);
 // Middleware
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? [
-          'https://v0-cuppa-onboarding-design.vercel.app',
-          'https://cuppa-frontend.vercel.app',
-          'https://cuppa.vercel.app',
-          'https://cuppa.app',
-          'https://www.cuppa.app',
-        ]
-      : [
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'http://localhost:3002',
-          'http://localhost:3003',
-          'http://localhost:3004',
-          'http://localhost:3005',
-        ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = process.env.NODE_ENV === 'production' 
+        ? [
+            'https://v0-cuppa-onboarding-design.vercel.app',
+            'https://cuppa-frontend.vercel.app',
+            'https://cuppa.vercel.app',
+            'https://cuppa.app',
+            'https://www.cuppa.app',
+          ]
+        : [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:3002',
+            'http://localhost:3003',
+            'http://localhost:3004',
+            'http://localhost:3005',
+          ];
+      
+      // Check exact matches first
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // In production, also allow any Vercel deployment URLs for our project
+      if (process.env.NODE_ENV === 'production') {
+        if (origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)) {
+          return callback(null, true);
+        }
+      }
+      
+      // Reject other origins
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -87,7 +107,20 @@ app.use((req: Request, res: Response, next: NextFunction) => {
         'http://localhost:3005',
       ];
 
-  if (origin && allowedOrigins.includes(origin)) {
+  let isAllowed = false;
+  
+  if (origin) {
+    // Check exact matches
+    if (allowedOrigins.includes(origin)) {
+      isAllowed = true;
+    }
+    // In production, also allow any Vercel deployment URLs for our project
+    else if (process.env.NODE_ENV === 'production' && origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)) {
+      isAllowed = true;
+    }
+  }
+
+  if (isAllowed) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
