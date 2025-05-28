@@ -58,7 +58,8 @@ const defaultConfig: Config = {
 // Load values from environment variables
 const config: Config = {
   NODE_ENV: process.env.NODE_ENV || defaultConfig.NODE_ENV,
-  PORT: parseInt(process.env.PORT || defaultConfig.PORT.toString(), 10),
+  // For Render, use PORT from environment or default to 10000
+  PORT: parseInt(process.env.PORT || (process.env.NODE_ENV === 'production' ? '10000' : defaultConfig.PORT.toString()), 10),
   MONGODB_URI: process.env.MONGODB_URI || defaultConfig.MONGODB_URI,
   JWT_SECRET: process.env.JWT_SECRET || defaultConfig.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || defaultConfig.JWT_EXPIRES_IN,
@@ -84,5 +85,12 @@ if (config.NODE_ENV === 'production' && config.JWT_SECRET === defaultConfig.JWT_
       'Set a secure JWT_SECRET in your environment variables.'
   );
 }
+
+// Print configuration info for debugging
+console.log(`🔧 Configuration loaded:`);
+console.log(`   NODE_ENV: ${config.NODE_ENV}`);
+console.log(`   PORT: ${config.PORT}`);
+console.log(`   MONGODB_URI: ${config.MONGODB_URI.replace(/\/\/.*@/, '//***:***@')}`); // Hide credentials
+console.log(`   API_HOST: ${config.API_HOST}`);
 
 export default config;

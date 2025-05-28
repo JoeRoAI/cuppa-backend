@@ -28,6 +28,18 @@ export const setupMockDatabase = () => {
 export const connectDB = async (): Promise<void> => {
   try {
     const mongoURI = config.MONGODB_URI;
+    
+    console.log(`🔗 Attempting to connect to MongoDB...`);
+    console.log(`   Environment: ${config.NODE_ENV}`);
+    console.log(`   URI: ${mongoURI.replace(/\/\/.*@/, '//***:***@')}`); // Hide credentials
+
+    // Check if we're in production and don't have a proper MongoDB URI
+    if (config.NODE_ENV === 'production' && mongoURI === 'mongodb://localhost:27017/cuppa') {
+      throw new Error(
+        'Production environment detected but no MongoDB URI configured. ' +
+        'Please set MONGODB_URI environment variable with your MongoDB Atlas connection string.'
+      );
+    }
 
     // Check if the connection string is the default local one and we can't connect
     if (mongoURI === 'mongodb://localhost:27017/cuppa' && config.NODE_ENV === 'development') {
@@ -38,6 +50,7 @@ export const connectDB = async (): Promise<void> => {
           serverSelectionTimeoutMS: 2000, // Use a shorter timeout for local connection test
         };
         await mongoose.connect(mongoURI, localOptions);
+        console.log(`✅ MongoDB Connected: Local development database`);
       } catch (err) {
         // If local connection fails, suggest using mock mode or Atlas
         console.warn('⚠️ Could not connect to local MongoDB. You have three options:');
@@ -52,43 +65,45 @@ export const connectDB = async (): Promise<void> => {
     } else {
       // Regular connection attempt with normal timeout
       const conn = await mongoose.connect(mongoURI, options);
-      console.log(`MongoDB Connected: ${conn.connection.host}`);
+      console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     }
 
     // Handle connection errors after initial connection
     mongoose.connection.on('error', (err) => {
-      console.error(`MongoDB connection error: ${err}`);
+      console.error(`❌ MongoDB connection error: ${err}`);
     });
 
     // Handle disconnection
     mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected, trying to reconnect...');
+      console.log('⚠️ MongoDB disconnected, trying to reconnect...');
     });
 
     // Handle reconnection
     mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
+      console.log('✅ MongoDB reconnected');
     });
 
     // If the Node process ends, close the MongoDB connection
     process.on('SIGINT', async () => {
       await mongoose.connection.close();
-      console.log('MongoDB connection closed due to app termination');
+      console.log('🔌 MongoDB connection closed due to app termination');
       process.exit(0);
     });
   } catch (error: any) {
-    console.error(`MongoDB connection error: ${error.message}`);
+    console.error(`❌ MongoDB connection error: ${error.message}`);
 
     // In development mode, continue without exiting to allow working on other features
     if (config.NODE_ENV === 'development') {
       console.log(
-        'Running in development mode without MongoDB connection. Some features will be unavailable.'
+        '🔄 Running in development mode without MongoDB connection. Some features will be unavailable.'
       );
       // Set up mock database automatically
       setupMockDatabase();
       return;
     } else {
-      // Only exit in production environment
+      // In production, we need a database connection
+      console.error('💥 Production environment requires a valid MongoDB connection. Exiting...');
+      console.error('Please configure MONGODB_URI environment variable with your MongoDB Atlas connection string.');
       process.exit(1);
     }
   }

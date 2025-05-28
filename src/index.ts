@@ -45,13 +45,20 @@ const httpServer = createServer(app);
 // Middleware
 app.use(
   cors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://localhost:3003',
-      'http://localhost:3004',
-    ],
+    origin: process.env.NODE_ENV === 'production' 
+      ? [
+          // Add your production frontend URLs here
+          'https://your-frontend-domain.com',
+          'https://your-frontend-domain.vercel.app',
+          // Add any other production domains
+        ]
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://localhost:3002',
+          'http://localhost:3003',
+          'http://localhost:3004',
+        ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -160,13 +167,22 @@ const startServer = async () => {
       console.warn('⚠️ WebSocket service initialization failed (non-critical):', error);
     }
 
-    // Use PORT from config file instead of environment variable defaulting to 3000
-    const port = process.env.PORT || config.PORT;
+    // Use PORT from environment (Render sets this) or config file
+    const port = parseInt(process.env.PORT || config.PORT.toString(), 10);
     
-    httpServer.listen(port, () => {
-      console.log(`🚀 Server running in ${config.NODE_ENV} mode on port ${port}`);
-      console.log(`📡 API available at: http://localhost:${port}`);
-      console.log(`🔗 Health check: http://localhost:${port}/`);
+    // Bind to all interfaces (0.0.0.0) for Render deployment
+    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    
+    httpServer.listen(port, host, () => {
+      console.log(`🚀 Server running in ${config.NODE_ENV} mode`);
+      console.log(`📡 Listening on ${host}:${port}`);
+      console.log(`🔗 Health check: http://${host}:${port}/health`);
+      
+      if (config.NODE_ENV === 'production') {
+        console.log(`🌐 Production API available at: https://your-app-name.onrender.com`);
+      } else {
+        console.log(`📡 Local API available at: http://localhost:${port}`);
+      }
     });
   } catch (err) {
     console.error('❌ Server startup error:', err);
