@@ -30,13 +30,11 @@ const NotificationSchema = new Schema<INotification>(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     type: {
       type: String,
       enum: ['like', 'comment', 'follow', 'checkin', 'review', 'event', 'achievement', 'mention'],
       required: true,
-      index: true,
     },
     title: {
       type: String,
@@ -78,12 +76,10 @@ const NotificationSchema = new Schema<INotification>(
     isRead: {
       type: Boolean,
       default: false,
-      index: true,
     },
     isDelivered: {
       type: Boolean,
       default: false,
-      index: true,
     },
     deliveredAt: {
       type: Date,
@@ -99,7 +95,6 @@ const NotificationSchema = new Schema<INotification>(
       type: String,
       enum: ['low', 'medium', 'high', 'urgent'],
       default: 'medium',
-      index: true,
     },
   },
   {

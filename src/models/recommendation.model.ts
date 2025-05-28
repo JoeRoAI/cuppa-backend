@@ -32,19 +32,16 @@ const UserInteractionSchema: Schema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     coffeeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Coffee',
       required: true,
-      index: true,
     },
     interactionType: {
       type: String,
       required: true,
       enum: ['view', 'click', 'search', 'favorite', 'purchase', 'rating', 'share', 'review'],
-      index: true,
     },
     value: {
       type: Number,
@@ -53,7 +50,6 @@ const UserInteractionSchema: Schema = new Schema(
     timestamp: {
       type: Date,
       default: Date.now,
-      index: true,
     },
     metadata: {
       deviceType: String,
@@ -94,12 +90,10 @@ const RecommendationSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     itemId: {
       type: Schema.Types.ObjectId,
       required: true,
-      index: true,
       // This is a dynamic reference based on itemType
       refPath: 'itemType',
     },
@@ -125,13 +119,11 @@ const RecommendationSchema: Schema = new Schema(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
     status: {
       type: String,
       enum: ['active', 'viewed', 'clicked', 'dismissed'],
       default: 'active',
-      index: true,
     },
   },
   {
@@ -160,13 +152,11 @@ const TasteSimilaritySchema: Schema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     userId2: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     similarityScore: {
       type: Number,
@@ -206,13 +196,11 @@ const ItemSimilaritySchema: Schema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Coffee',
       required: true,
-      index: true,
     },
     coffeeId2: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Coffee',
       required: true,
-      index: true,
     },
     similarityScore: {
       type: Number,

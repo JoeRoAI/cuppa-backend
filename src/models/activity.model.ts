@@ -40,7 +40,6 @@ const ActivitySchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
     },
     activityType: {
       type: String,
@@ -56,12 +55,10 @@ const ActivitySchema: Schema = new Schema(
         'badge_earned',
         'profile_update'
       ],
-      index: true
     },
     targetId: {
       type: Schema.Types.ObjectId,
       refPath: 'targetType',
-      index: true
     },
     targetType: {
       type: String,
@@ -70,7 +67,6 @@ const ActivitySchema: Schema = new Schema(
     targetUserId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      index: true
     },
     content: {
       type: String,
@@ -83,12 +79,10 @@ const ActivitySchema: Schema = new Schema(
       type: String,
       enum: ['public', 'followers', 'private'],
       default: 'public',
-      index: true
     },
     isDeleted: {
       type: Boolean,
       default: false,
-      index: true
     }
   },
   {

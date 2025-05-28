@@ -113,7 +113,6 @@ const TasteProfileSchema: Schema = new Schema(
       ref: 'User',
       required: [true, 'User ID is required'],
       unique: true,
-      index: true,
     },
     
     preferredAttributes: [
@@ -332,7 +331,6 @@ const TasteProfileSchema: Schema = new Schema(
 );
 
 // Create indexes for efficient querying
-TasteProfileSchema.index({ userId: 1 });
 TasteProfileSchema.index({ lastCalculated: 1 });
 TasteProfileSchema.index({ profileConfidence: -1 });
 

@@ -21,24 +21,20 @@ const LikeSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
     },
     targetId: {
       type: Schema.Types.ObjectId,
       refPath: 'targetType',
       required: true,
-      index: true
     },
     targetType: {
       type: String,
       required: true,
       enum: ['Coffee', 'Review', 'Comment'],
-      index: true
     },
     isActive: {
       type: Boolean,
       default: true,
-      index: true
     }
   },
   {

@@ -86,21 +86,4 @@ if (config.NODE_ENV === 'production' && config.JWT_SECRET === defaultConfig.JWT_
   );
 }
 
-// Print configuration info for debugging
-console.log(`🔧 Configuration loaded:`);
-console.log(`   NODE_ENV: ${config.NODE_ENV}`);
-console.log(`   PORT: ${config.PORT}`);
-console.log(`   MONGODB_URI: ${config.MONGODB_URI.replace(/\/\/.*@/, '//***:***@')}`); // Hide credentials
-console.log(`   API_HOST: ${config.API_HOST}`);
-
-// Debug environment variables in production
-if (config.NODE_ENV === 'production') {
-  console.log(`🔍 Environment variables debug:`);
-  console.log(`   process.env.NODE_ENV: ${process.env.NODE_ENV}`);
-  console.log(`   process.env.PORT: ${process.env.PORT}`);
-  console.log(`   process.env.MONGODB_URI exists: ${!!process.env.MONGODB_URI}`);
-  console.log(`   process.env.JWT_SECRET exists: ${!!process.env.JWT_SECRET}`);
-  console.log(`   process.env.API_HOST exists: ${!!process.env.API_HOST}`);
-}
-
 export default config;

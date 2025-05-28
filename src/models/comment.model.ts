@@ -27,7 +27,6 @@ const CommentSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
     },
     content: {
       type: String,
@@ -40,18 +39,15 @@ const CommentSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       refPath: 'targetType',
       required: true,
-      index: true
     },
     targetType: {
       type: String,
       required: true,
       enum: ['Coffee', 'Review'],
-      index: true
     },
     parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Comment',
-      index: true
     },
     likeCount: {
       type: Number,
@@ -65,13 +61,11 @@ const CommentSchema: Schema = new Schema(
     isDeleted: {
       type: Boolean,
       default: false,
-      index: true
     },
     status: {
       type: String,
       enum: ['approved', 'pending', 'spam', 'rejected'],
       default: 'approved',
-      index: true
     }
   },
   {
