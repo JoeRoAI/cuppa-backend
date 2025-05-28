@@ -173,13 +173,13 @@ const startServer = async () => {
     // Bind to all interfaces (0.0.0.0) for Render deployment
     const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
     
-    httpServer.listen(port, host, () => {
+    httpServer.listen(port, () => {
       console.log(`🚀 Server running in ${config.NODE_ENV} mode`);
       console.log(`📡 Listening on ${host}:${port}`);
       console.log(`🔗 Health check: http://${host}:${port}/health`);
       
       if (config.NODE_ENV === 'production') {
-        console.log(`🌐 Production API available at: https://your-app-name.onrender.com`);
+        console.log(`🌐 Production API available at: https://cuppa-backend.onrender.com`);
       } else {
         console.log(`📡 Local API available at: http://localhost:${port}`);
       }
