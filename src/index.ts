@@ -48,9 +48,14 @@ app.use(
     origin: process.env.NODE_ENV === 'production' 
       ? [
           // Add your production frontend URLs here
-          'https://your-frontend-domain.com',
-          'https://your-frontend-domain.vercel.app',
-          // Add any other production domains
+          'https://v0-cuppa-onboarding-design.vercel.app',
+          'https://cuppa-frontend.vercel.app',
+          'https://cuppa.vercel.app',
+          // Add any custom domains
+          'https://cuppa.app',
+          'https://www.cuppa.app',
+          // Allow any Vercel preview deployments
+          /^https:\/\/.*\.vercel\.app$/,
         ]
       : [
           'http://localhost:3000',
@@ -58,6 +63,7 @@ app.use(
           'http://localhost:3002',
           'http://localhost:3003',
           'http://localhost:3004',
+          'http://localhost:3005',
         ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
