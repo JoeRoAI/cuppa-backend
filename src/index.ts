@@ -66,6 +66,43 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
+// Manual CORS middleware as backup
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [
+        'https://v0-cuppa-onboarding-design.vercel.app',
+        'https://cuppa-frontend.vercel.app',
+        'https://cuppa.vercel.app',
+        'https://cuppa.app',
+        'https://www.cuppa.app',
+      ]
+    : [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:3003',
+        'http://localhost:3004',
+        'http://localhost:3005',
+      ];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
