@@ -92,6 +92,19 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    env: config.NODE_ENV,
+    port: config.PORT,
+    database: usingMockDatabase ? 'mock' : 'mongodb',
+  });
+});
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
@@ -126,30 +139,45 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // Start the server
 const startServer = async () => {
-  // Connect to MongoDB
-  await connectDB();
-
-  // Initialize product synchronization
-  await initializeSync();
-
-  // Initialize WebSocket service
-  WebSocketService.initialize(httpServer);
-
-  // Use PORT from config file instead of environment variable defaulting to 3000
-  const port = process.env.PORT || config.PORT;
-  
   try {
+    // Connect to MongoDB
+    await connectDB();
+    console.log('✅ Database connection established');
+
+    // Initialize product synchronization (non-blocking)
+    try {
+      await initializeSync();
+      console.log('✅ Product sync initialized');
+    } catch (error) {
+      console.warn('⚠️ Product sync initialization failed (non-critical):', error);
+    }
+
+    // Initialize WebSocket service (non-blocking)
+    try {
+      WebSocketService.initialize(httpServer);
+      console.log('✅ WebSocket service initialized');
+    } catch (error) {
+      console.warn('⚠️ WebSocket service initialization failed (non-critical):', error);
+    }
+
+    // Use PORT from config file instead of environment variable defaulting to 3000
+    const port = process.env.PORT || config.PORT;
+    
     httpServer.listen(port, () => {
-      console.log(`Server running in ${config.NODE_ENV} mode on port ${port}`);
-      console.log(`WebSocket service initialized and ready for connections`);
+      console.log(`🚀 Server running in ${config.NODE_ENV} mode on port ${port}`);
+      console.log(`📡 API available at: http://localhost:${port}`);
+      console.log(`🔗 Health check: http://localhost:${port}/`);
     });
   } catch (err) {
-    console.error(`Could not start server on port ${port}:`, err);
+    console.error('❌ Server startup error:', err);
     process.exit(1);
   }
 };
 
-startServer().catch((err) => console.error('Server startup error:', err));
+startServer().catch((err) => {
+  console.error('❌ Critical server startup error:', err);
+  process.exit(1);
+});
 
 // Export for testing
 export default app;

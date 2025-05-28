@@ -170,6 +170,14 @@ export const getSyncedProductById = async (
  */
 export const initializeSync = async (): Promise<void> => {
   try {
+    console.log('🔄 Initializing product sync...');
+    
+    // Check if we have the required Shopify configuration
+    if (!process.env.SHOPIFY_API_KEY || !process.env.SHOPIFY_API_SECRET) {
+      console.log('ℹ️ Shopify credentials not configured, skipping product sync initialization');
+      return;
+    }
+
     // Initial synchronization
     await productSyncService.initializeProductSync();
     
@@ -177,8 +185,9 @@ export const initializeSync = async (): Promise<void> => {
     const syncInterval = parseInt(process.env.SHOPIFY_SYNC_INTERVAL || '60', 10);
     productSyncService.setupSyncSchedule(syncInterval);
     
-    console.log(`Product sync initialized. Automatic sync scheduled every ${syncInterval} minutes.`);
-  } catch (error) {
-    console.error('Failed to initialize product sync:', error);
+    console.log(`✅ Product sync initialized. Automatic sync scheduled every ${syncInterval} minutes.`);
+  } catch (error: any) {
+    console.warn('⚠️ Product sync initialization failed (non-critical):', error.message);
+    // Don't throw the error - let the server continue without product sync
   }
 };
