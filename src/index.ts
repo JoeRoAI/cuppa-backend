@@ -170,13 +170,11 @@ const startServer = async () => {
     // Use PORT from environment (Render sets this) or config file
     const port = parseInt(process.env.PORT || config.PORT.toString(), 10);
     
-    // Bind to all interfaces (0.0.0.0) for Render deployment
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-    
-    httpServer.listen(port, () => {
+    // For Render, we need to bind to 0.0.0.0 explicitly
+    httpServer.listen(port, '0.0.0.0', () => {
       console.log(`🚀 Server running in ${config.NODE_ENV} mode`);
-      console.log(`📡 Listening on ${host}:${port}`);
-      console.log(`🔗 Health check: http://${host}:${port}/health`);
+      console.log(`📡 Listening on 0.0.0.0:${port}`);
+      console.log(`🔗 Health check: http://0.0.0.0:${port}/health`);
       
       if (config.NODE_ENV === 'production') {
         console.log(`🌐 Production API available at: https://cuppa-backend.onrender.com`);
