@@ -4,7 +4,7 @@
   "description": "Backend API for Cuppa coffee discovery application",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "ts-node --transpile-only src/index.ts",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "clean:start": "rm -rf node_modules/.cache && ts-node src/index.ts",
     "build": "tsc",
