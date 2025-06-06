@@ -44,7 +44,14 @@ interface ValidationResult {
 
 class DataIngestionService extends EventEmitter {
   private readonly VALID_INTERACTION_TYPES = [
-    'view', 'click', 'search', 'favorite', 'purchase', 'rating', 'share', 'review'
+    'view',
+    'click',
+    'search',
+    'favorite',
+    'purchase',
+    'rating',
+    'share',
+    'review',
   ];
 
   private readonly BATCH_SIZE_DEFAULT = 1000;
@@ -75,20 +82,22 @@ class DataIngestionService extends EventEmitter {
       validateData = true,
       skipDuplicates = true,
       onProgress,
-      onError
+      onError,
     } = options;
 
     const results = {
       processed: 0,
       failed: 0,
       duplicates: 0,
-      errors: [] as Array<{ data: RawInteractionData; error: string }>
+      errors: [] as Array<{ data: RawInteractionData; error: string }>,
     };
 
     const effectiveBatchSize = Math.min(batchSize, this.MAX_BATCH_SIZE);
     const totalBatches = Math.ceil(data.length / effectiveBatchSize);
 
-    logger.info(`Starting batch processing of ${data.length} interactions in ${totalBatches} batches`);
+    logger.info(
+      `Starting batch processing of ${data.length} interactions in ${totalBatches} batches`
+    );
 
     for (let i = 0; i < data.length; i += effectiveBatchSize) {
       const batch = data.slice(i, i + effectiveBatchSize);
@@ -98,7 +107,7 @@ class DataIngestionService extends EventEmitter {
         const batchResults = await this.processBatch(batch, {
           validateData,
           skipDuplicates,
-          onError
+          onError,
         });
 
         results.processed += batchResults.processed;
@@ -111,7 +120,7 @@ class DataIngestionService extends EventEmitter {
           batchNumber,
           totalBatches,
           processed: results.processed,
-          failed: results.failed
+          failed: results.failed,
         });
 
         // Call progress callback if provided
@@ -119,15 +128,18 @@ class DataIngestionService extends EventEmitter {
           onProgress(results.processed, data.length);
         }
 
-        logger.info(`Batch ${batchNumber}/${totalBatches} completed: ${batchResults.processed} processed, ${batchResults.failed} failed`);
-
+        logger.info(
+          `Batch ${batchNumber}/${totalBatches} completed: ${batchResults.processed} processed, ${batchResults.failed} failed`
+        );
       } catch (error) {
         logger.error(`Error processing batch ${batchNumber}:`, error);
         results.failed += batch.length;
       }
     }
 
-    logger.info(`Batch processing completed: ${results.processed} processed, ${results.failed} failed, ${results.duplicates} duplicates`);
+    logger.info(
+      `Batch processing completed: ${results.processed} processed, ${results.failed} failed, ${results.duplicates} duplicates`
+    );
     this.emit('batchComplete', results);
 
     return results;
@@ -154,7 +166,7 @@ class DataIngestionService extends EventEmitter {
       processed: 0,
       failed: 0,
       duplicates: 0,
-      errors: [] as Array<{ data: RawInteractionData; error: string }>
+      errors: [] as Array<{ data: RawInteractionData; error: string }>,
     };
 
     const validatedData: IUserInteraction[] = [];
@@ -177,7 +189,6 @@ class DataIngestionService extends EventEmitter {
 
         const transformedData = await this.transformInteractionData(rawData);
         validatedData.push(transformedData);
-
       } catch (error) {
         results.failed++;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -218,7 +229,7 @@ class DataIngestionService extends EventEmitter {
     const result: ValidationResult = {
       isValid: true,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     // Required field validation
@@ -236,7 +247,9 @@ class DataIngestionService extends EventEmitter {
 
     // Validate interaction type
     if (data.interactionType && !this.VALID_INTERACTION_TYPES.includes(data.interactionType)) {
-      result.errors.push(`Invalid interactionType: ${data.interactionType}. Valid types: ${this.VALID_INTERACTION_TYPES.join(', ')}`);
+      result.errors.push(
+        `Invalid interactionType: ${data.interactionType}. Valid types: ${this.VALID_INTERACTION_TYPES.join(', ')}`
+      );
     }
 
     // Validate ObjectId format
@@ -302,7 +315,7 @@ class DataIngestionService extends EventEmitter {
       interactionType: data.interactionType,
       value: data.value || null,
       timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
-      metadata: data.metadata || {}
+      metadata: data.metadata || {},
     } as IUserInteraction;
 
     // Ensure metadata exists before accessing it
@@ -334,22 +347,24 @@ class DataIngestionService extends EventEmitter {
     const existingInteractions = new Set<string>();
 
     // Query existing interactions in batches
-    const userIds = [...new Set(data.map(d => d.userId.toString()))];
-    const coffeeIds = [...new Set(data.map(d => d.coffeeId.toString()))];
+    const userIds = [...new Set(data.map((d) => d.userId.toString()))];
+    const coffeeIds = [...new Set(data.map((d) => d.coffeeId.toString()))];
 
     const existing = await UserInteraction.find({
       userId: { $in: userIds },
-      coffeeId: { $in: coffeeIds }
-    }).select('userId coffeeId interactionType timestamp').lean();
+      coffeeId: { $in: coffeeIds },
+    })
+      .select('userId coffeeId interactionType timestamp')
+      .lean();
 
     // Create lookup keys for existing interactions
-    existing.forEach(interaction => {
+    existing.forEach((interaction) => {
       const key = `${interaction.userId}_${interaction.coffeeId}_${interaction.interactionType}_${interaction.timestamp.getTime()}`;
       existingInteractions.add(key);
     });
 
     // Filter out duplicates
-    return data.filter(interaction => {
+    return data.filter((interaction) => {
       const key = `${interaction.userId}_${interaction.coffeeId}_${interaction.interactionType}_${interaction.timestamp.getTime()}`;
       return !existingInteractions.has(key);
     });
@@ -371,7 +386,7 @@ class DataIngestionService extends EventEmitter {
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Validation failed: ${validation.errors.join(', ')}`
+          error: `Validation failed: ${validation.errors.join(', ')}`,
         };
       }
 
@@ -387,22 +402,21 @@ class DataIngestionService extends EventEmitter {
         interactionId: interaction._id as mongoose.Types.ObjectId,
         userId: interaction.userId,
         coffeeId: interaction.coffeeId,
-        interactionType: interaction.interactionType
+        interactionType: interaction.interactionType,
       });
 
       logger.debug(`Real-time interaction ingested: ${interaction._id}`);
 
       return {
         success: true,
-        interactionId: interaction._id as mongoose.Types.ObjectId
+        interactionId: interaction._id as mongoose.Types.ObjectId,
       };
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Error ingesting real-time interaction:', error);
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -413,15 +427,21 @@ class DataIngestionService extends EventEmitter {
    */
   private setupEventHandlers(): void {
     this.on('batchProgress', (data) => {
-      logger.info(`Batch progress: ${data.batchNumber}/${data.totalBatches} - Processed: ${data.processed}, Failed: ${data.failed}`);
+      logger.info(
+        `Batch progress: ${data.batchNumber}/${data.totalBatches} - Processed: ${data.processed}, Failed: ${data.failed}`
+      );
     });
 
     this.on('batchComplete', (results) => {
-      logger.info(`Batch processing complete - Total processed: ${results.processed}, Failed: ${results.failed}, Duplicates: ${results.duplicates}`);
+      logger.info(
+        `Batch processing complete - Total processed: ${results.processed}, Failed: ${results.failed}, Duplicates: ${results.duplicates}`
+      );
     });
 
     this.on('realTimeInteraction', (data) => {
-      logger.debug(`Real-time interaction processed: ${data.interactionId} for user ${data.userId}`);
+      logger.debug(
+        `Real-time interaction processed: ${data.interactionId} for user ${data.userId}`
+      );
     });
   }
 
@@ -467,13 +487,13 @@ class DataIngestionService extends EventEmitter {
       UserInteraction.countDocuments({ timestamp: { $gte: startTime } }),
       UserInteraction.aggregate([
         { $match: { timestamp: { $gte: startTime } } },
-        { $group: { _id: '$interactionType', count: { $sum: 1 } } }
+        { $group: { _id: '$interactionType', count: { $sum: 1 } } },
       ]),
-      UserInteraction.findOne({}, {}, { sort: { timestamp: -1 } })
+      UserInteraction.findOne({}, {}, { sort: { timestamp: -1 } }),
     ]);
 
     const interactionsByType: Record<string, number> = {};
-    typeResults.forEach(result => {
+    typeResults.forEach((result) => {
       interactionsByType[result._id] = result.count;
     });
 
@@ -484,9 +504,9 @@ class DataIngestionService extends EventEmitter {
       totalInteractions: totalResult,
       interactionsByType,
       averagePerHour,
-      lastIngestionTime: lastInteraction?.timestamp || null
+      lastIngestionTime: lastInteraction?.timestamp || null,
     };
   }
 }
 
-export default new DataIngestionService(); 
+export default new DataIngestionService();

@@ -4,8 +4,8 @@
  */
 
 import express from 'express';
-import { 
-  getRecommendations, 
+import {
+  getRecommendations,
   getUserTasteProfile,
   ingestUserInteractions,
   batchIngestInteractions,
@@ -18,7 +18,7 @@ import {
   getPerformanceMetrics,
   detectModelDrift,
   setModelBaseline,
-  getMonitoringStats
+  getMonitoringStats,
 } from '../controllers/recommendation.controller';
 import { protect } from '../middleware/auth.middleware';
 

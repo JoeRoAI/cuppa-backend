@@ -21,7 +21,7 @@ export const uploadProfileImage = async (
     if (!req.file) {
       res.status(400).json({
         success: false,
-        message: 'No image file provided'
+        message: 'No image file provided',
       });
       return;
     }
@@ -29,7 +29,7 @@ export const uploadProfileImage = async (
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: 'User not authenticated'
+        message: 'User not authenticated',
       });
       return;
     }
@@ -39,7 +39,7 @@ export const uploadProfileImage = async (
     if (!isValidImage) {
       res.status(400).json({
         success: false,
-        message: 'Invalid image file'
+        message: 'Invalid image file',
       });
       return;
     }
@@ -55,7 +55,7 @@ export const uploadProfileImage = async (
     if (!user) {
       res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
       return;
     }
@@ -81,15 +81,15 @@ export const uploadProfileImage = async (
         size: processedImage.size,
         dimensions: {
           width: processedImage.width,
-          height: processedImage.height
-        }
-      }
+          height: processedImage.height,
+        },
+      },
     });
   } catch (error) {
     console.error('Error uploading profile image:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while uploading image'
+      message: 'Server error while uploading image',
     });
   }
 };
@@ -111,7 +111,7 @@ export const uploadReviewImages = async (
     if (!files || files.length === 0) {
       res.status(400).json({
         success: false,
-        message: 'No image files provided'
+        message: 'No image files provided',
       });
       return;
     }
@@ -119,7 +119,7 @@ export const uploadReviewImages = async (
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: 'User not authenticated'
+        message: 'User not authenticated',
       });
       return;
     }
@@ -129,7 +129,7 @@ export const uploadReviewImages = async (
     if (!rating) {
       res.status(404).json({
         success: false,
-        message: 'Rating not found'
+        message: 'Rating not found',
       });
       return;
     }
@@ -137,7 +137,7 @@ export const uploadReviewImages = async (
     if (rating.userId.toString() !== req.user.id) {
       res.status(403).json({
         success: false,
-        message: 'Not authorized to upload images for this rating'
+        message: 'Not authorized to upload images for this rating',
       });
       return;
     }
@@ -150,21 +150,18 @@ export const uploadReviewImages = async (
       if (!isValidImage) {
         res.status(400).json({
           success: false,
-          message: `Invalid image file: ${file.originalname}`
+          message: `Invalid image file: ${file.originalname}`,
         });
         return;
       }
 
       // Process and save image
-      const processedImage = await imageService.processReviewImage(
-        file.buffer,
-        file.originalname
-      );
+      const processedImage = await imageService.processReviewImage(file.buffer, file.originalname);
       processedImages.push(processedImage);
     }
 
     // Update rating with new image URLs
-    const imageUrls = processedImages.map(img => img.url);
+    const imageUrls = processedImages.map((img) => img.url);
     rating.images = [...(rating.images || []), ...imageUrls];
     await rating.save();
 
@@ -173,23 +170,23 @@ export const uploadReviewImages = async (
       message: 'Review images uploaded successfully',
       data: {
         ratingId: rating._id,
-        uploadedImages: processedImages.map(img => ({
+        uploadedImages: processedImages.map((img) => ({
           url: img.url,
           publicId: img.publicId,
           size: img.size,
           dimensions: {
             width: img.width,
-            height: img.height
-          }
+            height: img.height,
+          },
         })),
-        totalImages: rating.images.length
-      }
+        totalImages: rating.images.length,
+      },
     });
   } catch (error) {
     console.error('Error uploading review images:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while uploading images'
+      message: 'Server error while uploading images',
     });
   }
 };
@@ -208,7 +205,7 @@ export const deleteProfileImage = async (
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: 'User not authenticated'
+        message: 'User not authenticated',
       });
       return;
     }
@@ -217,7 +214,7 @@ export const deleteProfileImage = async (
     if (!user) {
       res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
       return;
     }
@@ -225,7 +222,7 @@ export const deleteProfileImage = async (
     if (!user.profileImage) {
       res.status(400).json({
         success: false,
-        message: 'No profile image to delete'
+        message: 'No profile image to delete',
       });
       return;
     }
@@ -242,13 +239,13 @@ export const deleteProfileImage = async (
 
     res.status(200).json({
       success: true,
-      message: 'Profile image deleted successfully'
+      message: 'Profile image deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting profile image:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while deleting image'
+      message: 'Server error while deleting image',
     });
   }
 };
@@ -270,7 +267,7 @@ export const deleteReviewImage = async (
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: 'User not authenticated'
+        message: 'User not authenticated',
       });
       return;
     }
@@ -280,7 +277,7 @@ export const deleteReviewImage = async (
     if (!rating) {
       res.status(404).json({
         success: false,
-        message: 'Rating not found'
+        message: 'Rating not found',
       });
       return;
     }
@@ -288,7 +285,7 @@ export const deleteReviewImage = async (
     if (rating.userId.toString() !== req.user.id) {
       res.status(403).json({
         success: false,
-        message: 'Not authorized to delete images for this rating'
+        message: 'Not authorized to delete images for this rating',
       });
       return;
     }
@@ -297,7 +294,7 @@ export const deleteReviewImage = async (
     if (!rating.images || !rating.images.includes(decodedImageUrl)) {
       res.status(404).json({
         success: false,
-        message: 'Image not found in rating'
+        message: 'Image not found in rating',
       });
       return;
     }
@@ -309,7 +306,7 @@ export const deleteReviewImage = async (
     }
 
     // Remove image URL from rating
-    rating.images = rating.images.filter(img => img !== decodedImageUrl);
+    rating.images = rating.images.filter((img) => img !== decodedImageUrl);
     await rating.save();
 
     res.status(200).json({
@@ -317,14 +314,14 @@ export const deleteReviewImage = async (
       message: 'Review image deleted successfully',
       data: {
         ratingId: rating._id,
-        remainingImages: rating.images.length
-      }
+        remainingImages: rating.images.length,
+      },
     });
   } catch (error) {
     console.error('Error deleting review image:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while deleting image'
+      message: 'Server error while deleting image',
     });
   }
-}; 
+};

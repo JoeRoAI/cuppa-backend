@@ -250,10 +250,10 @@ export const deleteProductById = async (shopifyId: string): Promise<boolean> => 
     // Extract numeric ID if in GraphQL ID format
     const idMatch = shopifyId.match(/(\d+)$/);
     const normalizedId = idMatch ? idMatch[1] : shopifyId;
-    
+
     // Delete the product
     const result = await Coffee.deleteOne({ shopifyProductId: normalizedId });
-    
+
     return result.deletedCount > 0;
   } catch (error) {
     console.error(`Error deleting product ${shopifyId}:`, error);
@@ -284,8 +284,8 @@ export const updateProductInventory = async (
       {
         $set: {
           available,
-          lastSynced: new Date()
-        }
+          lastSynced: new Date(),
+        },
       }
     );
 
@@ -318,10 +318,10 @@ export const initializeProductSync = async (): Promise<void> => {
  */
 export const setupSyncSchedule = (intervalMinutes = 60): NodeJS.Timeout => {
   console.log(`Setting up automatic product sync every ${intervalMinutes} minutes`);
-  
+
   // Convert minutes to milliseconds
   const interval = intervalMinutes * 60 * 1000;
-  
+
   // Initial sync
   setTimeout(async () => {
     try {
@@ -332,7 +332,7 @@ export const setupSyncSchedule = (intervalMinutes = 60): NodeJS.Timeout => {
       console.error('Error in scheduled product sync:', error);
     }
   }, 10000); // Wait 10 seconds after server start for initial sync
-  
+
   // Return the interval timer
   return setInterval(async () => {
     try {
@@ -347,19 +347,21 @@ export const setupSyncSchedule = (intervalMinutes = 60): NodeJS.Timeout => {
 
 function extractOriginFromTitle(title: string): { region?: string } {
   // Try to extract region information from the title
-  const regionMatches = title.match(/(Ethiopian|Colombian|Brazilian|Kenyan|Rwandan|Costa Rican|Guatemalan|Peruvian|Indonesian|Vietnamese|Sumatran|Javan)/i);
-  
+  const regionMatches = title.match(
+    /(Ethiopian|Colombian|Brazilian|Kenyan|Rwandan|Costa Rican|Guatemalan|Peruvian|Indonesian|Vietnamese|Sumatran|Javan)/i
+  );
+
   if (regionMatches && regionMatches[1]) {
     return { region: regionMatches[1] };
   }
-  
+
   return {};
 }
 
 function extractRoastLevelFromDescription(description: string): string {
   // Default roast level
   let roastLevel = 'medium';
-  
+
   // Try to extract roast level from description
   if (/light roast/i.test(description)) {
     roastLevel = 'light';
@@ -374,7 +376,7 @@ function extractRoastLevelFromDescription(description: string): string {
   } else if (/extra-dark|french/i.test(description)) {
     roastLevel = 'extra-dark';
   }
-  
+
   return roastLevel;
 }
 

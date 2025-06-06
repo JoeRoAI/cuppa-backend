@@ -1103,8 +1103,10 @@ export const createCheckout = async (
         return;
       }
 
-      if (merchandise.quantityAvailable !== null && 
-          merchandise.quantityAvailable < edge.node.quantity) {
+      if (
+        merchandise.quantityAvailable !== null &&
+        merchandise.quantityAvailable < edge.node.quantity
+      ) {
         res.status(400).json({
           success: false,
           message: 'Insufficient inventory for one or more items',
@@ -1166,17 +1168,17 @@ export const createCheckout = async (
           customAttributes: [
             {
               key: 'source',
-              value: 'cuppa_app'
+              value: 'cuppa_app',
             },
             {
               key: 'user_id',
-              value: req.user?.id || 'anonymous'
+              value: req.user?.id || 'anonymous',
             },
             {
               key: 'session_id',
-              value: req.sessionID || 'unknown'
-            }
-          ]
+              value: req.sessionID || 'unknown',
+            },
+          ],
         },
       },
     });
@@ -1225,11 +1227,7 @@ export const createCheckout = async (
  * @route   GET /api/shopify/orders
  * @access  Private
  */
-export const getOrders = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getOrders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.user?.id;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -1513,23 +1511,19 @@ export const getOrders = async (
       let filteredOrders = mockOrders;
 
       if (status) {
-        filteredOrders = filteredOrders.filter(order => 
-          order.fulfillmentStatus === status || order.financialStatus === status
+        filteredOrders = filteredOrders.filter(
+          (order) => order.fulfillmentStatus === status || order.financialStatus === status
         );
       }
 
       if (startDate) {
         const start = new Date(startDate);
-        filteredOrders = filteredOrders.filter(order => 
-          new Date(order.createdAt) >= start
-        );
+        filteredOrders = filteredOrders.filter((order) => new Date(order.createdAt) >= start);
       }
 
       if (endDate) {
         const end = new Date(endDate);
-        filteredOrders = filteredOrders.filter(order => 
-          new Date(order.createdAt) <= end
-        );
+        filteredOrders = filteredOrders.filter((order) => new Date(order.createdAt) <= end);
       }
 
       // Apply pagination
@@ -1734,7 +1728,7 @@ export const getOrders = async (
     const customerOrders = response.body.data.customer.orders;
     const orders = customerOrders.edges.map((edge: any) => {
       const order = edge.node;
-      
+
       // Transform fulfillments to include tracking status
       const fulfillments = order.fulfillments.map((fulfillment: any) => ({
         id: fulfillment.id,
@@ -1747,11 +1741,16 @@ export const getOrders = async (
         estimatedDelivery: fulfillment.estimatedDeliveryAt,
         deliveredAt: fulfillment.deliveredAt,
         inTransitAt: fulfillment.inTransitAt,
-        shipmentStatus: fulfillment.deliveredAt ? 'delivered' : 
-                       fulfillment.inTransitAt ? 'in_transit' : 
-                       fulfillment.status === 'success' ? 'shipped' : 'pending',
-        location: fulfillment.location ? 
-          `${fulfillment.location.city}, ${fulfillment.location.province}` : null,
+        shipmentStatus: fulfillment.deliveredAt
+          ? 'delivered'
+          : fulfillment.inTransitAt
+            ? 'in_transit'
+            : fulfillment.status === 'success'
+              ? 'shipped'
+              : 'pending',
+        location: fulfillment.location
+          ? `${fulfillment.location.city}, ${fulfillment.location.province}`
+          : null,
         lineItems: fulfillment.fulfillmentLineItems.edges.map((item: any) => ({
           id: item.node.lineItem.id,
           quantity: item.node.quantity,
@@ -1789,7 +1788,8 @@ export const getOrders = async (
         fulfillments,
         tags: order.tags,
         note: order.note,
-        customerNote: order.customAttributes?.find((attr: any) => attr.key === 'customer_note')?.value,
+        customerNote: order.customAttributes?.find((attr: any) => attr.key === 'customer_note')
+          ?.value,
       };
     });
 

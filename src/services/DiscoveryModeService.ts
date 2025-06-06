@@ -35,17 +35,17 @@ const DISCOVERY_CONFIG = {
     DECAY_RATE: 0.995, // Epsilon decay over time
     MIN_EPSILON: 0.05, // Minimum exploration rate
   },
-  
+
   UCB: {
     CONFIDENCE_LEVEL: 2.0, // UCB confidence parameter
     MIN_TRIALS: 5, // Minimum trials before UCB kicks in
   },
-  
+
   THOMPSON_SAMPLING: {
     ALPHA_PRIOR: 1.0, // Beta distribution alpha prior
     BETA_PRIOR: 1.0, // Beta distribution beta prior
   },
-  
+
   // Diversity constraints
   DIVERSITY: {
     MAX_SAME_ORIGIN: 2,
@@ -53,14 +53,14 @@ const DISCOVERY_CONFIG = {
     MAX_SAME_PROCESSING: 2,
     MIN_ATTRIBUTE_DISTANCE: 0.4,
   },
-  
+
   // Learning parameters
   LEARNING: {
     FEEDBACK_WINDOW_DAYS: 30,
     MIN_INTERACTIONS_FOR_LEARNING: 10,
     EXPLORATION_BOOST_FACTOR: 1.5,
   },
-  
+
   // Recommendation limits
   MAX_DISCOVERY_RECOMMENDATIONS: 20,
   MIN_QUALITY_THRESHOLD: 3.0, // Minimum average rating
@@ -108,17 +108,19 @@ class DiscoveryModeService {
   ): Promise<InternalRecommendation[]> {
     try {
       const userIdString = userId.toString();
-      logger.info(`Generating discovery recommendations for user ${userIdString} using ${algorithm}`);
-      
+      logger.info(
+        `Generating discovery recommendations for user ${userIdString} using ${algorithm}`
+      );
+
       // Initialize or update user's bandit arms
       await this.initializeBanditArms(userIdString, excludeCoffeeIds);
-      
+
       // Get user's exploration metrics
       const metrics = await this.getExplorationMetrics(userIdString);
-      
+
       // Generate recommendations based on selected algorithm
       let recommendations: InternalRecommendation[] = [];
-      
+
       switch (algorithm) {
         case 'epsilon-greedy':
           recommendations = await this.epsilonGreedyRecommendations(userId, metrics, limit);
@@ -134,16 +136,17 @@ class DiscoveryModeService {
           recommendations = await this.hybridBanditRecommendations(userId, metrics, limit);
           break;
       }
-      
+
       // Apply diversity constraints
       recommendations = this.applyDiversityConstraints(recommendations);
-      
+
       // Add discovery-specific reasons
       recommendations = this.addDiscoveryReasons(recommendations, algorithm);
-      
-      logger.info(`Generated ${recommendations.length} discovery recommendations for user ${userIdString}`);
+
+      logger.info(
+        `Generated ${recommendations.length} discovery recommendations for user ${userIdString}`
+      );
       return recommendations.slice(0, limit);
-      
     } catch (error) {
       logger.error('Error generating discovery recommendations:', error);
       return [];
@@ -160,20 +163,20 @@ class DiscoveryModeService {
   ): Promise<InternalRecommendation[]> {
     const arms = this.banditArms.get(userId.toString()) || [];
     const recommendations: InternalRecommendation[] = [];
-    
+
     // Calculate current epsilon with decay
     const epsilon = Math.max(
       DISCOVERY_CONFIG.EPSILON_GREEDY.MIN_EPSILON,
-      DISCOVERY_CONFIG.EPSILON_GREEDY.EPSILON * 
-      Math.pow(DISCOVERY_CONFIG.EPSILON_GREEDY.DECAY_RATE, metrics.totalDiscoveryInteractions)
+      DISCOVERY_CONFIG.EPSILON_GREEDY.EPSILON *
+        Math.pow(DISCOVERY_CONFIG.EPSILON_GREEDY.DECAY_RATE, metrics.totalDiscoveryInteractions)
     );
-    
+
     for (let i = 0; i < limit && i < arms.length; i++) {
       let selectedArm: BanditArm;
-      
+
       if (Math.random() < epsilon) {
         // Exploration: select random arm
-        const unexploredArms = arms.filter(arm => arm.trials < 3);
+        const unexploredArms = arms.filter((arm) => arm.trials < 3);
         if (unexploredArms.length > 0) {
           selectedArm = unexploredArms[Math.floor(Math.random() * unexploredArms.length)];
         } else {
@@ -181,20 +184,20 @@ class DiscoveryModeService {
         }
       } else {
         // Exploitation: select best performing arm
-        selectedArm = arms.reduce((best, current) => 
+        selectedArm = arms.reduce((best, current) =>
           current.averageReward > best.averageReward ? current : best
         );
       }
-      
+
       recommendations.push(this.createRecommendation(userId, selectedArm, 'epsilon-greedy'));
-      
+
       // Remove selected arm to avoid duplicates
       const armIndex = arms.indexOf(selectedArm);
       if (armIndex > -1) {
         arms.splice(armIndex, 1);
       }
     }
-    
+
     return recommendations;
   }
 
@@ -209,11 +212,11 @@ class DiscoveryModeService {
     const arms = this.banditArms.get(userId.toString()) || [];
     const recommendations: InternalRecommendation[] = [];
     const totalTrials = arms.reduce((sum, arm) => sum + arm.trials, 0);
-    
+
     // Calculate UCB scores for each arm
-    const armsWithUCB = arms.map(arm => {
+    const armsWithUCB = arms.map((arm) => {
       let ucbScore: number;
-      
+
       if (arm.trials < DISCOVERY_CONFIG.UCB.MIN_TRIALS) {
         // Give high priority to under-explored arms
         ucbScore = Number.MAX_SAFE_INTEGER;
@@ -223,18 +226,18 @@ class DiscoveryModeService {
         );
         ucbScore = arm.averageReward + confidenceTerm;
       }
-      
+
       return { arm, ucbScore };
     });
-    
+
     // Sort by UCB score and select top arms
     armsWithUCB.sort((a, b) => b.ucbScore - a.ucbScore);
-    
+
     for (let i = 0; i < limit && i < armsWithUCB.length; i++) {
       const { arm } = armsWithUCB[i];
       recommendations.push(this.createRecommendation(userId, arm, 'ucb'));
     }
-    
+
     return recommendations;
   }
 
@@ -248,24 +251,24 @@ class DiscoveryModeService {
   ): Promise<InternalRecommendation[]> {
     const arms = this.banditArms.get(userId.toString()) || [];
     const recommendations: InternalRecommendation[] = [];
-    
+
     // Calculate Thompson sampling scores for each arm
-    const armsWithSamples = arms.map(arm => {
+    const armsWithSamples = arms.map((arm) => {
       const alpha = DISCOVERY_CONFIG.THOMPSON_SAMPLING.ALPHA_PRIOR + arm.successes;
       const beta = DISCOVERY_CONFIG.THOMPSON_SAMPLING.BETA_PRIOR + (arm.trials - arm.successes);
       const sample = this.sampleBetaDistribution(alpha, beta);
-      
+
       return { arm, sample };
     });
-    
+
     // Sort by sampled values and select top arms
     armsWithSamples.sort((a, b) => b.sample - a.sample);
-    
+
     for (let i = 0; i < limit && i < armsWithSamples.length; i++) {
       const { arm } = armsWithSamples[i];
       recommendations.push(this.createRecommendation(userId, arm, 'thompson-sampling'));
     }
-    
+
     return recommendations;
   }
 
@@ -278,17 +281,17 @@ class DiscoveryModeService {
     limit: number
   ): Promise<InternalRecommendation[]> {
     const recommendations: InternalRecommendation[] = [];
-    
+
     // Allocate recommendations across algorithms
     const epsilonCount = Math.ceil(limit * 0.4);
     const ucbCount = Math.ceil(limit * 0.3);
     const thompsonCount = limit - epsilonCount - ucbCount;
-    
+
     // Get recommendations from each algorithm
     const epsilonRecs = await this.epsilonGreedyRecommendations(userId, metrics, epsilonCount);
     const ucbRecs = await this.ucbRecommendations(userId, metrics, ucbCount);
     const thompsonRecs = await this.thompsonSamplingRecommendations(userId, metrics, thompsonCount);
-    
+
     // Combine and deduplicate
     recommendations.push(...epsilonRecs, ...ucbRecs, ...thompsonRecs);
     return this.deduplicateRecommendations(recommendations).slice(0, limit);
@@ -300,10 +303,10 @@ class DiscoveryModeService {
   private async initializeBanditArms(userId: string, excludeCoffeeIds: string[]): Promise<void> {
     try {
       const Coffee = mongoose.model('Coffee');
-      
+
       // Get available coffees that meet quality threshold
       const availableCoffees = await Coffee.find({
-        _id: { $nin: excludeCoffeeIds.map(id => new mongoose.Types.ObjectId(id)) },
+        _id: { $nin: excludeCoffeeIds.map((id) => new mongoose.Types.ObjectId(id)) },
         isActive: true,
         isAvailable: true,
         avgRating: { $gte: DISCOVERY_CONFIG.MIN_QUALITY_THRESHOLD },
@@ -316,28 +319,32 @@ class DiscoveryModeService {
       const interactions = await UserInteraction.find({
         userId: userObjectId,
         interactionType: { $in: ['rating', 'purchase', 'favorite'] },
-        timestamp: { 
-          $gte: new Date(Date.now() - DISCOVERY_CONFIG.LEARNING.FEEDBACK_WINDOW_DAYS * 24 * 60 * 60 * 1000) 
+        timestamp: {
+          $gte: new Date(
+            Date.now() - DISCOVERY_CONFIG.LEARNING.FEEDBACK_WINDOW_DAYS * 24 * 60 * 60 * 1000
+          ),
         },
       }).lean();
 
-      const interactionMap = new Map(
-        interactions.map(i => [i.coffeeId.toString(), i])
-      );
+      const interactionMap = new Map(interactions.map((i) => [i.coffeeId.toString(), i]));
 
       // Create or update bandit arms
-      const arms: BanditArm[] = availableCoffees.map(coffee => {
+      const arms: BanditArm[] = availableCoffees.map((coffee) => {
         const coffeeId = (coffee._id as mongoose.Types.ObjectId).toString();
         const interaction = interactionMap.get(coffeeId);
-        
+
         let trials = 0;
         let successes = 0;
         let averageReward = 0;
-        
+
         if (interaction) {
           trials = 1;
           // Consider rating >= 4 or purchase/favorite as success
-          if (interaction.interactionType === 'rating' && interaction.value !== undefined && interaction.value >= 4) {
+          if (
+            interaction.interactionType === 'rating' &&
+            interaction.value !== undefined &&
+            interaction.value >= 4
+          ) {
             successes = 1;
             averageReward = (interaction.value - 3) / 2; // Normalize to 0-1
           } else if (['purchase', 'favorite'].includes(interaction.interactionType)) {
@@ -365,7 +372,6 @@ class DiscoveryModeService {
       });
 
       this.banditArms.set(userId, arms);
-      
     } catch (error) {
       logger.error('Error initializing bandit arms:', error);
       this.banditArms.set(userId, []);
@@ -377,46 +383,53 @@ class DiscoveryModeService {
    */
   private async getExplorationMetrics(userId: string): Promise<ExplorationMetrics> {
     let metrics = this.explorationMetrics.get(userId);
-    
+
     if (!metrics) {
       try {
         // Calculate metrics from user's interaction history
         const userObjectId = new mongoose.Types.ObjectId(userId);
         const interactions = await UserInteraction.find({
           userId: userObjectId,
-          timestamp: { 
-            $gte: new Date(Date.now() - DISCOVERY_CONFIG.LEARNING.FEEDBACK_WINDOW_DAYS * 24 * 60 * 60 * 1000) 
+          timestamp: {
+            $gte: new Date(
+              Date.now() - DISCOVERY_CONFIG.LEARNING.FEEDBACK_WINDOW_DAYS * 24 * 60 * 60 * 1000
+            ),
           },
         }).lean();
 
         const totalInteractions = interactions.length;
-        const discoveryInteractions = interactions.filter(i => 
-          i.metadata?.source === 'discovery' || i.metadata?.algorithm?.includes('discovery')
+        const discoveryInteractions = interactions.filter(
+          (i) => i.metadata?.source === 'discovery' || i.metadata?.algorithm?.includes('discovery')
         ).length;
 
-        const successfulDiscoveries = interactions.filter(i => 
-          (i.metadata?.source === 'discovery' || i.metadata?.algorithm?.includes('discovery')) &&
-          ((i.interactionType === 'rating' && i.value !== undefined && i.value >= 4) ||
-          ['purchase', 'favorite'].includes(i.interactionType))
+        const successfulDiscoveries = interactions.filter(
+          (i) =>
+            (i.metadata?.source === 'discovery' || i.metadata?.algorithm?.includes('discovery')) &&
+            ((i.interactionType === 'rating' && i.value !== undefined && i.value >= 4) ||
+              ['purchase', 'favorite'].includes(i.interactionType))
         ).length;
 
         // Calculate diversity score based on variety of coffee attributes
-        const uniqueOrigins = new Set(interactions.map(i => i.metadata?.origin).filter(Boolean));
-        const uniqueRoasts = new Set(interactions.map(i => i.metadata?.roastLevel).filter(Boolean));
+        const uniqueOrigins = new Set(interactions.map((i) => i.metadata?.origin).filter(Boolean));
+        const uniqueRoasts = new Set(
+          interactions.map((i) => i.metadata?.roastLevel).filter(Boolean)
+        );
         const diversityScore = Math.min(1.0, (uniqueOrigins.size + uniqueRoasts.size) / 10);
 
         metrics = {
           userId,
           explorationRate: totalInteractions > 0 ? discoveryInteractions / totalInteractions : 0.1,
           diversityScore,
-          noveltyPreference: successfulDiscoveries > 0 ? successfulDiscoveries / Math.max(1, discoveryInteractions) : 0.5,
+          noveltyPreference:
+            successfulDiscoveries > 0
+              ? successfulDiscoveries / Math.max(1, discoveryInteractions)
+              : 0.5,
           lastUpdated: new Date(),
           totalDiscoveryInteractions: discoveryInteractions,
           successfulDiscoveries,
         };
 
         this.explorationMetrics.set(userId, metrics);
-        
       } catch (error) {
         logger.error('Error calculating exploration metrics:', error);
         // Default metrics for new users
@@ -432,14 +445,16 @@ class DiscoveryModeService {
         this.explorationMetrics.set(userId, metrics);
       }
     }
-    
+
     return metrics;
   }
 
   /**
    * Apply diversity constraints to ensure variety in recommendations
    */
-  private applyDiversityConstraints(recommendations: InternalRecommendation[]): InternalRecommendation[] {
+  private applyDiversityConstraints(
+    recommendations: InternalRecommendation[]
+  ): InternalRecommendation[] {
     const diversified: InternalRecommendation[] = [];
     const originCount = new Map<string, number>();
     const roastLevelCount = new Map<string, number>();
@@ -458,10 +473,11 @@ class DiscoveryModeService {
       const currentRoastCount = roastLevelCount.get(roastLevel) || 0;
       const currentProcessingCount = processingCount.get(processing) || 0;
 
-      if (currentOriginCount < DISCOVERY_CONFIG.DIVERSITY.MAX_SAME_ORIGIN &&
-          currentRoastCount < DISCOVERY_CONFIG.DIVERSITY.MAX_SAME_ROAST &&
-          currentProcessingCount < DISCOVERY_CONFIG.DIVERSITY.MAX_SAME_PROCESSING) {
-        
+      if (
+        currentOriginCount < DISCOVERY_CONFIG.DIVERSITY.MAX_SAME_ORIGIN &&
+        currentRoastCount < DISCOVERY_CONFIG.DIVERSITY.MAX_SAME_ROAST &&
+        currentProcessingCount < DISCOVERY_CONFIG.DIVERSITY.MAX_SAME_PROCESSING
+      ) {
         diversified.push(rec);
         originCount.set(origin, currentOriginCount + 1);
         roastLevelCount.set(roastLevel, currentRoastCount + 1);
@@ -482,7 +498,7 @@ class DiscoveryModeService {
     recommendations: InternalRecommendation[],
     algorithm: string
   ): InternalRecommendation[] {
-    return recommendations.map(rec => {
+    return recommendations.map((rec) => {
       const coffee = rec.coffee;
       const reasons: string[] = [];
 
@@ -558,9 +574,11 @@ class DiscoveryModeService {
   /**
    * Remove duplicate recommendations based on coffee ID
    */
-  private deduplicateRecommendations(recommendations: InternalRecommendation[]): InternalRecommendation[] {
+  private deduplicateRecommendations(
+    recommendations: InternalRecommendation[]
+  ): InternalRecommendation[] {
     const seen = new Set<string>();
-    return recommendations.filter(rec => {
+    return recommendations.filter((rec) => {
       const coffeeId = rec.itemId.toString();
       if (seen.has(coffeeId)) {
         return false;
@@ -579,12 +597,12 @@ class DiscoveryModeService {
       const mean = alpha / (alpha + beta);
       const variance = (alpha * beta) / ((alpha + beta) ** 2 * (alpha + beta + 1));
       const stddev = Math.sqrt(variance);
-      
+
       // Generate normal random and clamp to [0, 1]
       const normal = this.generateNormalRandom();
       return Math.max(0, Math.min(1, mean + normal * stddev));
     }
-    
+
     // Fallback to uniform for edge cases
     return Math.random();
   }
@@ -610,15 +628,15 @@ class DiscoveryModeService {
       const arms = this.banditArms.get(userId);
       if (!arms) return;
 
-      const arm = arms.find(a => a.coffeeId === coffeeId);
+      const arm = arms.find((a) => a.coffeeId === coffeeId);
       if (!arm) return;
 
       arm.trials += 1;
-      
+
       if (feedback === 'positive') {
         arm.successes += 1;
       }
-      
+
       arm.averageReward = arm.successes / arm.trials;
       arm.confidence = Math.sqrt(1 / arm.trials);
       arm.lastUpdated = new Date();
@@ -634,7 +652,6 @@ class DiscoveryModeService {
       }
 
       logger.info(`Updated bandit arm for user ${userId}, coffee ${coffeeId}: ${feedback}`);
-      
     } catch (error) {
       logger.error('Error updating bandit arm:', error);
     }
@@ -652,9 +669,9 @@ class DiscoveryModeService {
   }> {
     const metrics = await this.getExplorationMetrics(userId);
     const arms = this.banditArms.get(userId) || [];
-    
+
     const topPerformingArms = arms
-      .filter(arm => arm.trials > 0)
+      .filter((arm) => arm.trials > 0)
       .sort((a, b) => b.averageReward - a.averageReward)
       .slice(0, 5);
 
@@ -662,12 +679,13 @@ class DiscoveryModeService {
       explorationRate: metrics.explorationRate,
       diversityScore: metrics.diversityScore,
       totalDiscoveries: metrics.totalDiscoveryInteractions,
-      successRate: metrics.totalDiscoveryInteractions > 0 
-        ? metrics.successfulDiscoveries / metrics.totalDiscoveryInteractions 
-        : 0,
+      successRate:
+        metrics.totalDiscoveryInteractions > 0
+          ? metrics.successfulDiscoveries / metrics.totalDiscoveryInteractions
+          : 0,
       topPerformingArms,
     };
   }
 }
 
-export default new DiscoveryModeService(); 
+export default new DiscoveryModeService();

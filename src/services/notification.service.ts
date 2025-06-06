@@ -61,7 +61,9 @@ class NotificationService extends EventEmitter {
       // Check privacy settings
       const shouldSend = await this.checkPrivacySettings(data.userId, data.type);
       if (!shouldSend) {
-        logger.debug(`Notification blocked by privacy settings: ${data.type} for user ${data.userId}`);
+        logger.debug(
+          `Notification blocked by privacy settings: ${data.type} for user ${data.userId}`
+        );
         return null;
       }
 
@@ -86,7 +88,6 @@ class NotificationService extends EventEmitter {
 
       logger.debug(`Notification created: ${notification._id} for user ${data.userId}`);
       return notification;
-
     } catch (error) {
       logger.error('Error creating notification:', error);
       throw error;
@@ -142,7 +143,6 @@ class NotificationService extends EventEmitter {
         },
         priority: params.type === 'follow' ? 'high' : 'medium',
       });
-
     } catch (error) {
       logger.error('Error creating social notification:', error);
       throw error;
@@ -163,12 +163,7 @@ class NotificationService extends EventEmitter {
     hasMore: boolean;
   }> {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        sortBy = 'createdAt',
-        sortOrder = 'desc',
-      } = options;
+      const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = options;
 
       const skip = (page - 1) * limit;
       const sortDirection = sortOrder === 'desc' ? -1 : 1;
@@ -217,7 +212,6 @@ class NotificationService extends EventEmitter {
         unreadCount,
         hasMore,
       };
-
     } catch (error) {
       logger.error('Error getting notifications:', error);
       throw error;
@@ -234,11 +228,11 @@ class NotificationService extends EventEmitter {
     try {
       const result = await Notification.updateOne(
         { _id: notificationId, userId },
-        { 
-          $set: { 
-            isRead: true, 
-            readAt: new Date() 
-          } 
+        {
+          $set: {
+            isRead: true,
+            readAt: new Date(),
+          },
         }
       );
 
@@ -248,7 +242,6 @@ class NotificationService extends EventEmitter {
       }
 
       return false;
-
     } catch (error) {
       logger.error('Error marking notification as read:', error);
       throw error;
@@ -262,11 +255,11 @@ class NotificationService extends EventEmitter {
     try {
       const result = await Notification.updateMany(
         { userId, isRead: false },
-        { 
-          $set: { 
-            isRead: true, 
-            readAt: new Date() 
-          } 
+        {
+          $set: {
+            isRead: true,
+            readAt: new Date(),
+          },
         }
       );
 
@@ -275,7 +268,6 @@ class NotificationService extends EventEmitter {
       }
 
       return result.modifiedCount;
-
     } catch (error) {
       logger.error('Error marking all notifications as read:', error);
       throw error;
@@ -291,14 +283,13 @@ class NotificationService extends EventEmitter {
   ): Promise<boolean> {
     try {
       const result = await Notification.deleteOne({ _id: notificationId, userId });
-      
+
       if (result.deletedCount > 0) {
         this.emit('notificationDeleted', { notificationId, userId });
         return true;
       }
 
       return false;
-
     } catch (error) {
       logger.error('Error deleting notification:', error);
       throw error;
@@ -326,7 +317,7 @@ class NotificationService extends EventEmitter {
   ): Promise<boolean> {
     try {
       const privacySettings = await PrivacySettings.findOne({ userId });
-      
+
       if (!privacySettings) {
         return true; // Default to allowing notifications if no settings found
       }
@@ -343,7 +334,6 @@ class NotificationService extends EventEmitter {
         default:
           return true; // Allow other types by default
       }
-
     } catch (error) {
       logger.error('Error checking privacy settings:', error);
       return true; // Default to allowing on error
@@ -363,11 +353,11 @@ class NotificationService extends EventEmitter {
       case 'like':
         return {
           title: 'New Like',
-          message: targetName 
+          message: targetName
             ? `${actorName} liked your ${targetType || 'post'} "${targetName}"`
             : `${actorName} liked your ${targetType || 'post'}`,
         };
-      
+
       case 'comment':
         return {
           title: 'New Comment',
@@ -375,13 +365,13 @@ class NotificationService extends EventEmitter {
             ? `${actorName} commented on your ${targetType || 'post'} "${targetName}"`
             : `${actorName} commented on your ${targetType || 'post'}`,
         };
-      
+
       case 'follow':
         return {
           title: 'New Follower',
           message: `${actorName} started following you`,
         };
-      
+
       default:
         return {
           title: 'New Notification',
@@ -395,19 +385,22 @@ class NotificationService extends EventEmitter {
    */
   private setupCleanupJob(): void {
     // Run cleanup every 24 hours
-    setInterval(async () => {
-      try {
-        const result = await Notification.deleteMany({
-          expiresAt: { $lt: new Date() }
-        });
-        
-        if (result.deletedCount > 0) {
-          logger.info(`Cleaned up ${result.deletedCount} expired notifications`);
+    setInterval(
+      async () => {
+        try {
+          const result = await Notification.deleteMany({
+            expiresAt: { $lt: new Date() },
+          });
+
+          if (result.deletedCount > 0) {
+            logger.info(`Cleaned up ${result.deletedCount} expired notifications`);
+          }
+        } catch (error) {
+          logger.error('Error during notification cleanup:', error);
         }
-      } catch (error) {
-        logger.error('Error during notification cleanup:', error);
-      }
-    }, 24 * 60 * 60 * 1000); // 24 hours
+      },
+      24 * 60 * 60 * 1000
+    ); // 24 hours
   }
 
   /**
@@ -416,14 +409,15 @@ class NotificationService extends EventEmitter {
   async cleanupOldNotifications(daysOld: number = 30): Promise<number> {
     try {
       const cutoffDate = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
-      
+
       const result = await Notification.deleteMany({
-        createdAt: { $lt: cutoffDate }
+        createdAt: { $lt: cutoffDate },
       });
 
-      logger.info(`Cleaned up ${result.deletedCount} old notifications (older than ${daysOld} days)`);
+      logger.info(
+        `Cleaned up ${result.deletedCount} old notifications (older than ${daysOld} days)`
+      );
       return result.deletedCount;
-
     } catch (error) {
       logger.error('Error cleaning up old notifications:', error);
       throw error;
@@ -443,24 +437,18 @@ class NotificationService extends EventEmitter {
     try {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      const [
-        total,
-        unread,
-        byType,
-        byPriority,
-        recentActivity
-      ] = await Promise.all([
+      const [total, unread, byType, byPriority, recentActivity] = await Promise.all([
         Notification.countDocuments({ userId }),
         Notification.countDocuments({ userId, isRead: false }),
         Notification.aggregate([
           { $match: { userId } },
-          { $group: { _id: '$type', count: { $sum: 1 } } }
+          { $group: { _id: '$type', count: { $sum: 1 } } },
         ]),
         Notification.aggregate([
           { $match: { userId } },
-          { $group: { _id: '$priority', count: { $sum: 1 } } }
+          { $group: { _id: '$priority', count: { $sum: 1 } } },
         ]),
-        Notification.countDocuments({ userId, createdAt: { $gte: yesterday } })
+        Notification.countDocuments({ userId, createdAt: { $gte: yesterday } }),
       ]);
 
       // Convert aggregation results to objects
@@ -481,7 +469,6 @@ class NotificationService extends EventEmitter {
         byPriority: priorityStats,
         recentActivity,
       };
-
     } catch (error) {
       logger.error('Error getting notification stats:', error);
       throw error;
@@ -489,4 +476,4 @@ class NotificationService extends EventEmitter {
   }
 }
 
-export default NotificationService.getInstance(); 
+export default NotificationService.getInstance();

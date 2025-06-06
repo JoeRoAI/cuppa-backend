@@ -5,7 +5,7 @@ import {
   rateLimitImageUploads,
   validateImageFile,
   validateImagePermissions,
-  setImageSecurityHeaders
+  setImageSecurityHeaders,
 } from '../middleware/security.middleware';
 import {
   uploadProfileImage as uploadProfileImageController,
@@ -23,7 +23,8 @@ router.use(setImageSecurityHeaders);
 router.use(protect);
 
 // Profile image routes with enhanced security
-router.post('/profile', 
+router.post(
+  '/profile',
   validateImagePermissions('upload'),
   rateLimitImageUploads(5, 15 * 60 * 1000), // 5 uploads per 15 minutes
   uploadProfileImage,
@@ -31,13 +32,11 @@ router.post('/profile',
   uploadProfileImageController
 );
 
-router.delete('/profile', 
-  validateImagePermissions('delete'),
-  deleteProfileImage
-);
+router.delete('/profile', validateImagePermissions('delete'), deleteProfileImage);
 
 // Review image routes with enhanced security
-router.post('/review/:ratingId', 
+router.post(
+  '/review/:ratingId',
   validateImagePermissions('upload'),
   rateLimitImageUploads(10, 15 * 60 * 1000), // 10 uploads per 15 minutes for reviews
   uploadReviewImages,
@@ -45,9 +44,6 @@ router.post('/review/:ratingId',
   uploadReviewImagesController
 );
 
-router.delete('/review/:ratingId/:imageUrl', 
-  validateImagePermissions('delete'),
-  deleteReviewImage
-);
+router.delete('/review/:ratingId/:imageUrl', validateImagePermissions('delete'), deleteReviewImage);
 
-export default router; 
+export default router;

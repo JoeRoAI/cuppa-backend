@@ -139,14 +139,22 @@ class RecommendationEngine {
           recommendations = await this.getPopularityBasedRecommendations(userObjectId, excludeIds);
           break;
         case 'discovery':
-          recommendations = await this.getDiscoveryRecommendations(userObjectId, excludeIds, options.discoveryMode);
+          recommendations = await this.getDiscoveryRecommendations(
+            userObjectId,
+            excludeIds,
+            options.discoveryMode
+          );
           break;
         case 'social':
           recommendations = await this.getSocialRecommendations(userObjectId, excludeIds);
           break;
         case 'hybrid':
         default:
-          recommendations = await this.getHybridRecommendations(userObjectId, excludeIds, options.discoveryMode);
+          recommendations = await this.getHybridRecommendations(
+            userObjectId,
+            excludeIds,
+            options.discoveryMode
+          );
           break;
       }
 
@@ -269,8 +277,8 @@ class RecommendationEngine {
 
       for (const interaction of similarUserInteractions) {
         const coffeeId = interaction.coffeeId._id.toString();
-        const similarUser = similarUsers.find((sim) =>
-          sim.userId1.equals(interaction.userId) || sim.userId2.equals(interaction.userId)
+        const similarUser = similarUsers.find(
+          (sim) => sim.userId1.equals(interaction.userId) || sim.userId2.equals(interaction.userId)
         );
 
         if (!similarUser || !interaction.coffeeId) continue;
@@ -359,10 +367,10 @@ class RecommendationEngine {
 
       for (const coffee of candidateCoffees) {
         const similarity = this.calculateCoffeeSimilarity(coffee, preferenceProfile);
-        
+
         if (similarity > RECOMMENDATION_CONFIG.MIN_ITEM_SIMILARITY) {
           const reasons = this.generateContentBasedReasons(coffee, preferenceProfile);
-          
+
           recommendations.push({
             userId,
             itemId: coffee._id,
@@ -436,10 +444,7 @@ class RecommendationEngine {
 
       if (coffee.flavorProfile?.flavorNotes) {
         for (const note of coffee.flavorProfile.flavorNotes) {
-          profile.flavorNotes.set(
-            note,
-            (profile.flavorNotes.get(note) || 0) + interactionWeight
-          );
+          profile.flavorNotes.set(note, (profile.flavorNotes.get(note) || 0) + interactionWeight);
         }
       }
     }
@@ -458,7 +463,7 @@ class RecommendationEngine {
       favorite: 0.8,
       view: 0.3,
     };
-    
+
     const baseWeight = interactionWeights[interaction.interactionType] || 0.5;
 
     // Apply recency decay
@@ -475,7 +480,10 @@ class RecommendationEngine {
    * Find similar coffees using ItemSimilarity collection or database query
    * @private
    */
-  private async findSimilarCoffees(likedCoffeeIds: mongoose.Types.ObjectId[], excludeIds: string[]): Promise<any[]> {
+  private async findSimilarCoffees(
+    likedCoffeeIds: mongoose.Types.ObjectId[],
+    excludeIds: string[]
+  ): Promise<any[]> {
     // First try to use pre-computed similarities
     const similarities = await ItemSimilarity.find({
       coffeeId1: { $in: likedCoffeeIds },
@@ -493,7 +501,7 @@ class RecommendationEngine {
     // If we don't have enough pre-computed similarities, find candidates by attributes
     if (similarCoffees.length < 10) {
       const Coffee = mongoose.model('Coffee');
-      const excludeObjectIds = excludeIds.map(id => new mongoose.Types.ObjectId(id));
+      const excludeObjectIds = excludeIds.map((id) => new mongoose.Types.ObjectId(id));
       const additionalCoffees = await Coffee.find({
         _id: { $nin: [...likedCoffeeIds, ...excludeObjectIds] },
         isActive: true,
@@ -533,9 +541,13 @@ class RecommendationEngine {
     }
 
     // Processing method similarity
-    if (coffee.processingDetails?.method && profile.processingMethods.has(coffee.processingDetails.method)) {
+    if (
+      coffee.processingDetails?.method &&
+      profile.processingMethods.has(coffee.processingDetails.method)
+    ) {
       const weight = 0.2;
-      const preference = profile.processingMethods.get(coffee.processingDetails.method) / profile.totalWeight;
+      const preference =
+        profile.processingMethods.get(coffee.processingDetails.method) / profile.totalWeight;
       totalSimilarity += preference * weight;
       weightSum += weight;
     }
@@ -577,7 +589,10 @@ class RecommendationEngine {
       reasons.push(`You like coffees from ${coffee.origin.country}`);
     }
 
-    if (coffee.processingDetails?.method && profile.processingMethods.has(coffee.processingDetails.method)) {
+    if (
+      coffee.processingDetails?.method &&
+      profile.processingMethods.has(coffee.processingDetails.method)
+    ) {
       reasons.push(`You prefer ${coffee.processingDetails.method} processed coffees`);
     }
 
@@ -590,7 +605,7 @@ class RecommendationEngine {
       }
     }
 
-    return reasons.length > 0 ? reasons : ['Similar to coffees you\'ve enjoyed'];
+    return reasons.length > 0 ? reasons : ["Similar to coffees you've enjoyed"];
   }
 
   /**
@@ -603,18 +618,18 @@ class RecommendationEngine {
   ): Promise<InternalRecommendation[]> {
     try {
       const Coffee = mongoose.model('Coffee');
-      
+
       // Get popular coffees based on average rating and rating count
       const popularCoffees = await Coffee.find({
-        _id: { $nin: excludeCoffeeIds.map(id => new mongoose.Types.ObjectId(id)) },
+        _id: { $nin: excludeCoffeeIds.map((id) => new mongoose.Types.ObjectId(id)) },
         isActive: true,
         isAvailable: true,
         avgRating: { $gte: 4.0 }, // Only highly rated coffees
         ratingCount: { $gte: 5 }, // Must have at least 5 ratings
       })
-        .sort({ 
-          avgRating: -1, 
-          ratingCount: -1 
+        .sort({
+          avgRating: -1,
+          ratingCount: -1,
         })
         .limit(RECOMMENDATION_CONFIG.MAX_RECOMMENDATIONS)
         .lean();
@@ -623,29 +638,29 @@ class RecommendationEngine {
       const coffeeInteractionCounts = await UserInteraction.aggregate([
         {
           $match: {
-            coffeeId: { $in: popularCoffees.map(c => c._id) },
+            coffeeId: { $in: popularCoffees.map((c) => c._id) },
             interactionType: { $in: ['view', 'purchase', 'favorite', 'rating'] },
-            timestamp: { $gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } // Last 90 days
-          }
+            timestamp: { $gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }, // Last 90 days
+          },
         },
         {
           $group: {
             _id: '$coffeeId',
             totalInteractions: { $sum: 1 },
-            uniqueUsers: { $addToSet: '$userId' }
-          }
+            uniqueUsers: { $addToSet: '$userId' },
+          },
         },
         {
           $addFields: {
-            uniqueUserCount: { $size: '$uniqueUsers' }
-          }
-        }
+            uniqueUserCount: { $size: '$uniqueUsers' },
+          },
+        },
       ]);
 
       const interactionMap = new Map(
-        coffeeInteractionCounts.map(item => [
-          item._id.toString(), 
-          { total: item.totalInteractions, unique: item.uniqueUserCount }
+        coffeeInteractionCounts.map((item) => [
+          item._id.toString(),
+          { total: item.totalInteractions, unique: item.uniqueUserCount },
         ])
       );
 
@@ -653,15 +668,16 @@ class RecommendationEngine {
       const recommendations: InternalRecommendation[] = popularCoffees.map((coffee, index) => {
         const coffeeId = coffee._id as string;
         const interactions = interactionMap.get(coffeeId.toString()) || { total: 0, unique: 0 };
-        
+
         // Popularity score combines rating, rating count, and recent interactions
         const ratingScore = (coffee.avgRating / 5) * 0.4;
         const ratingCountScore = Math.min(coffee.ratingCount / 50, 1) * 0.3; // Normalize to max 50 ratings
         const interactionScore = Math.min(interactions.total / 100, 1) * 0.2; // Normalize to max 100 interactions
         const uniqueUserScore = Math.min(interactions.unique / 20, 1) * 0.1; // Normalize to max 20 unique users
-        
-        const popularityScore = (ratingScore + ratingCountScore + interactionScore + uniqueUserScore) * 
-                               RECOMMENDATION_CONFIG.WEIGHTS.POPULARITY;
+
+        const popularityScore =
+          (ratingScore + ratingCountScore + interactionScore + uniqueUserScore) *
+          RECOMMENDATION_CONFIG.WEIGHTS.POPULARITY;
 
         return {
           userId,
@@ -674,7 +690,9 @@ class RecommendationEngine {
           reasons: [
             `Highly rated (${coffee.avgRating.toFixed(1)}/5 stars)`,
             `${coffee.ratingCount} customer reviews`,
-            interactions.total > 0 ? `${interactions.total} recent interactions` : 'Trending coffee'
+            interactions.total > 0
+              ? `${interactions.total} recent interactions`
+              : 'Trending coffee',
           ],
         };
       });
@@ -703,34 +721,48 @@ class RecommendationEngine {
   ): Promise<InternalRecommendation[]> {
     try {
       logger.info(`Generating discovery recommendations for user ${userId}`);
-      
+
       // Use the new DiscoveryModeService for advanced bandit algorithms
       const banditAlgorithm = discoveryMode?.algorithm || 'hybrid';
       const limit = RECOMMENDATION_CONFIG.MAX_RECOMMENDATIONS;
-      
+
       const banditRecommendations = await DiscoveryModeService.generateDiscoveryRecommendations(
         userId,
         excludeCoffeeIds,
         banditAlgorithm,
         limit
       );
-      
+
       // banditRecommendations are already InternalRecommendation objects
       const discoveryRecommendations: InternalRecommendation[] = banditRecommendations;
-      
+
       // If bandit recommendations are insufficient, fall back to the original discovery logic
       if (discoveryRecommendations.length < 5) {
-        logger.info(`Bandit recommendations insufficient (${discoveryRecommendations.length}), adding fallback recommendations`);
-        const fallbackRecommendations = await this.getFallbackDiscoveryRecommendations(userId, excludeCoffeeIds);
-        
+        logger.info(
+          `Bandit recommendations insufficient (${discoveryRecommendations.length}), adding fallback recommendations`
+        );
+        const fallbackRecommendations = await this.getFallbackDiscoveryRecommendations(
+          userId,
+          excludeCoffeeIds
+        );
+
         // Merge recommendations, avoiding duplicates
-        const existingIds = new Set(discoveryRecommendations.map(r => r.itemId.toString()));
-        const newFallbackRecs = fallbackRecommendations.filter(r => !existingIds.has(r.itemId.toString()));
-        
-        discoveryRecommendations.push(...newFallbackRecs.slice(0, RECOMMENDATION_CONFIG.MAX_RECOMMENDATIONS - discoveryRecommendations.length));
+        const existingIds = new Set(discoveryRecommendations.map((r) => r.itemId.toString()));
+        const newFallbackRecs = fallbackRecommendations.filter(
+          (r) => !existingIds.has(r.itemId.toString())
+        );
+
+        discoveryRecommendations.push(
+          ...newFallbackRecs.slice(
+            0,
+            RECOMMENDATION_CONFIG.MAX_RECOMMENDATIONS - discoveryRecommendations.length
+          )
+        );
       }
-      
-      logger.info(`Generated ${discoveryRecommendations.length} discovery recommendations for user ${userId}`);
+
+      logger.info(
+        `Generated ${discoveryRecommendations.length} discovery recommendations for user ${userId}`
+      );
       return discoveryRecommendations;
     } catch (error) {
       logger.error('Error generating discovery recommendations:', error);
@@ -761,12 +793,12 @@ class RecommendationEngine {
 
       // Build user's typical preference profile
       const userPreferences = this.buildUserPreferenceProfile(userInteractions);
-      
+
       const Coffee = mongoose.model('Coffee');
-      
+
       // Find coffees that are different from user's typical preferences
       const diverseCoffees = await Coffee.find({
-        _id: { $nin: excludeCoffeeIds.map(id => new mongoose.Types.ObjectId(id)) },
+        _id: { $nin: excludeCoffeeIds.map((id) => new mongoose.Types.ObjectId(id)) },
         isActive: true,
         isAvailable: true,
         avgRating: { $gte: 3.5 }, // Still maintain some quality threshold
@@ -780,11 +812,11 @@ class RecommendationEngine {
       for (const coffee of diverseCoffees) {
         const coffeeId = coffee._id as string;
         const diversityScore = this.calculateDiversityScore(coffee, userPreferences);
-        
+
         // Only recommend if it's sufficiently different (discovery threshold)
         if (diversityScore > 0.3) {
           const reasons = this.generateDiscoveryReasons(coffee, userPreferences);
-          
+
           discoveryRecommendations.push({
             userId,
             itemId: new mongoose.Types.ObjectId(coffeeId),
@@ -873,7 +905,10 @@ class RecommendationEngine {
       reasons.push(`Explore coffee from ${coffee.origin.country}`);
     }
 
-    if (coffee.processingDetails?.method && !userPreferences.processingMethods.has(coffee.processingDetails.method)) {
+    if (
+      coffee.processingDetails?.method &&
+      !userPreferences.processingMethods.has(coffee.processingDetails.method)
+    ) {
       reasons.push(`Experience ${coffee.processingDetails.method} processing method`);
     }
 
@@ -893,7 +928,9 @@ class RecommendationEngine {
    * Apply diversity constraints to ensure variety in recommendations
    * @private
    */
-  private applyDiversityConstraints(recommendations: InternalRecommendation[]): InternalRecommendation[] {
+  private applyDiversityConstraints(
+    recommendations: InternalRecommendation[]
+  ): InternalRecommendation[] {
     const diversified: InternalRecommendation[] = [];
     const originCount = new Map<string, number>();
     const roastLevelCount = new Map<string, number>();
@@ -907,9 +944,10 @@ class RecommendationEngine {
       const currentOriginCount = originCount.get(origin) || 0;
       const currentRoastCount = roastLevelCount.get(roastLevel) || 0;
 
-      if (currentOriginCount < RECOMMENDATION_CONFIG.DIVERSITY.MAX_FROM_SAME_ORIGIN &&
-          currentRoastCount < RECOMMENDATION_CONFIG.DIVERSITY.MAX_FROM_SAME_ROAST_LEVEL) {
-        
+      if (
+        currentOriginCount < RECOMMENDATION_CONFIG.DIVERSITY.MAX_FROM_SAME_ORIGIN &&
+        currentRoastCount < RECOMMENDATION_CONFIG.DIVERSITY.MAX_FROM_SAME_ROAST_LEVEL
+      ) {
         diversified.push(rec);
         originCount.set(origin, currentOriginCount + 1);
         roastLevelCount.set(roastLevel, currentRoastCount + 1);
@@ -936,8 +974,8 @@ class RecommendationEngine {
       const connections = await SocialConnection.find({
         $or: [
           { userId: userId, status: 'accepted' },
-          { connectedUserId: userId, status: 'accepted' }
-        ]
+          { connectedUserId: userId, status: 'accepted' },
+        ],
       }).lean();
 
       if (connections.length === 0) {
@@ -946,7 +984,7 @@ class RecommendationEngine {
       }
 
       // Extract connected user IDs
-      const connectedUserIds = connections.map(conn => 
+      const connectedUserIds = connections.map((conn) =>
         conn.userId.equals(userId) ? conn.connectedUserId : conn.userId
       );
 
@@ -954,37 +992,41 @@ class RecommendationEngine {
       const socialInteractions = await UserInteraction.find({
         userId: { $in: connectedUserIds },
         interactionType: { $in: ['rating', 'purchase', 'favorite'] },
-        coffeeId: { $nin: excludeCoffeeIds.map(id => new mongoose.Types.ObjectId(id)) },
+        coffeeId: { $nin: excludeCoffeeIds.map((id) => new mongoose.Types.ObjectId(id)) },
         value: { $gte: 4 }, // Only high ratings
-        timestamp: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) } // Last 60 days
+        timestamp: { $gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) }, // Last 60 days
       })
         .populate('coffeeId')
         .populate('userId', 'name username')
         .lean();
 
       // Group by coffee and calculate social scores
-      const coffeeScores = new Map<string, { 
-        score: number; 
-        reasons: string[]; 
-        coffee: any; 
-        likedBy: string[] 
-      }>();
+      const coffeeScores = new Map<
+        string,
+        {
+          score: number;
+          reasons: string[];
+          coffee: any;
+          likedBy: string[];
+        }
+      >();
 
       for (const interaction of socialInteractions) {
         if (!interaction.coffeeId) continue;
-        
+
         const coffeeId = interaction.coffeeId._id.toString();
         const userObj = interaction.userId as any; // Populated user object
         const userName = userObj?.name || userObj?.username || 'A friend';
         const ratingValue = interaction.value || 5;
-        
+
         // Calculate social influence score based on interaction type and recency
-        const baseScore = {
-          purchase: 1.0,
-          rating: 0.8,
-          favorite: 0.9
-        }[interaction.interactionType] || 0.5;
-        
+        const baseScore =
+          {
+            purchase: 1.0,
+            rating: 0.8,
+            favorite: 0.9,
+          }[interaction.interactionType] || 0.5;
+
         const daysSince = (Date.now() - interaction.timestamp.getTime()) / (1000 * 60 * 60 * 24);
         const recencyWeight = Math.exp(-daysSince / 30); // Decay over 30 days
         const socialScore = (ratingValue / 5) * baseScore * recencyWeight;
@@ -993,13 +1035,15 @@ class RecommendationEngine {
           const existing = coffeeScores.get(coffeeId)!;
           existing.score += socialScore;
           existing.likedBy.push(userName);
-          existing.reasons.push(`${userName} ${this.getSocialActionText(interaction.interactionType)} this`);
+          existing.reasons.push(
+            `${userName} ${this.getSocialActionText(interaction.interactionType)} this`
+          );
         } else {
           coffeeScores.set(coffeeId, {
             score: socialScore,
             reasons: [`${userName} ${this.getSocialActionText(interaction.interactionType)} this`],
             coffee: interaction.coffeeId,
-            likedBy: [userName]
+            likedBy: [userName],
           });
         }
       }
@@ -1009,9 +1053,10 @@ class RecommendationEngine {
         .map(([coffeeId, data]) => {
           // Deduplicate liked by names
           const uniqueLikedBy = [...new Set(data.likedBy)];
-          const socialReason = uniqueLikedBy.length === 1 
-            ? `${uniqueLikedBy[0]} recommends this`
-            : `${uniqueLikedBy.length} friends recommend this`;
+          const socialReason =
+            uniqueLikedBy.length === 1
+              ? `${uniqueLikedBy[0]} recommends this`
+              : `${uniqueLikedBy.length} friends recommend this`;
 
           return {
             userId,
@@ -1027,9 +1072,7 @@ class RecommendationEngine {
         .sort((a, b) => b.score - a.score)
         .slice(0, RECOMMENDATION_CONFIG.MAX_RECOMMENDATIONS);
 
-      logger.info(
-        `Generated ${recommendations.length} social recommendations for user: ${userId}`
-      );
+      logger.info(`Generated ${recommendations.length} social recommendations for user: ${userId}`);
       return recommendations;
     } catch (error) {
       logger.error('Error in social recommendations:', error);
@@ -1043,10 +1086,14 @@ class RecommendationEngine {
    */
   private getSocialActionText(interactionType: string): string {
     switch (interactionType) {
-      case 'purchase': return 'bought';
-      case 'rating': return 'rated highly';
-      case 'favorite': return 'favorited';
-      default: return 'liked';
+      case 'purchase':
+        return 'bought';
+      case 'rating':
+        return 'rated highly';
+      case 'favorite':
+        return 'favorited';
+      default:
+        return 'liked';
     }
   }
 
@@ -1064,36 +1111,46 @@ class RecommendationEngine {
   ): Promise<InternalRecommendation[]> {
     try {
       // Get recommendations from all algorithms
-      const [
-        collaborativeRecs,
-        contentBasedRecs,
-        popularityRecs,
-        discoveryRecs,
-        socialRecs
-      ] = await Promise.all([
-        this.getCollaborativeFilteringRecommendations(userId, excludeCoffeeIds),
-        this.getContentBasedRecommendations(userId, excludeCoffeeIds),
-        this.getPopularityBasedRecommendations(userId, excludeCoffeeIds),
-        this.getDiscoveryRecommendations(userId, excludeCoffeeIds, discoveryMode),
-        this.getSocialRecommendations(userId, excludeCoffeeIds)
-      ]);
+      const [collaborativeRecs, contentBasedRecs, popularityRecs, discoveryRecs, socialRecs] =
+        await Promise.all([
+          this.getCollaborativeFilteringRecommendations(userId, excludeCoffeeIds),
+          this.getContentBasedRecommendations(userId, excludeCoffeeIds),
+          this.getPopularityBasedRecommendations(userId, excludeCoffeeIds),
+          this.getDiscoveryRecommendations(userId, excludeCoffeeIds, discoveryMode),
+          this.getSocialRecommendations(userId, excludeCoffeeIds),
+        ]);
 
       // Combine all recommendations into a single map
-      const combinedScores = new Map<string, {
-        totalScore: number;
-        algorithms: string[];
-        reasons: string[];
-        coffee: any;
-        algorithmScores: { [key: string]: number };
-      }>();
+      const combinedScores = new Map<
+        string,
+        {
+          totalScore: number;
+          algorithms: string[];
+          reasons: string[];
+          coffee: any;
+          algorithmScores: { [key: string]: number };
+        }
+      >();
 
       // Process each algorithm's recommendations
       const algorithmData = [
-        { recs: collaborativeRecs, name: 'collaborative', weight: RECOMMENDATION_CONFIG.WEIGHTS.COLLABORATIVE },
-        { recs: contentBasedRecs, name: 'content-based', weight: RECOMMENDATION_CONFIG.WEIGHTS.CONTENT_BASED },
-        { recs: popularityRecs, name: 'popularity', weight: RECOMMENDATION_CONFIG.WEIGHTS.POPULARITY },
+        {
+          recs: collaborativeRecs,
+          name: 'collaborative',
+          weight: RECOMMENDATION_CONFIG.WEIGHTS.COLLABORATIVE,
+        },
+        {
+          recs: contentBasedRecs,
+          name: 'content-based',
+          weight: RECOMMENDATION_CONFIG.WEIGHTS.CONTENT_BASED,
+        },
+        {
+          recs: popularityRecs,
+          name: 'popularity',
+          weight: RECOMMENDATION_CONFIG.WEIGHTS.POPULARITY,
+        },
         { recs: discoveryRecs, name: 'discovery', weight: RECOMMENDATION_CONFIG.WEIGHTS.DIVERSITY },
-        { recs: socialRecs, name: 'social', weight: 0.15 } // Social gets a small boost in hybrid
+        { recs: socialRecs, name: 'social', weight: 0.15 }, // Social gets a small boost in hybrid
       ];
 
       for (const { recs, name, weight } of algorithmData) {
@@ -1113,7 +1170,7 @@ class RecommendationEngine {
               algorithms: [name],
               reasons: rec.reasons || [rec.reason],
               coffee: rec.coffee,
-              algorithmScores: { [name]: rec.score }
+              algorithmScores: { [name]: rec.score },
             });
           }
         }
@@ -1125,7 +1182,7 @@ class RecommendationEngine {
           // Create a comprehensive reason that mentions multiple algorithms
           const algorithmCount = data.algorithms.length;
           let hybridReason = '';
-          
+
           if (algorithmCount === 1) {
             hybridReason = data.reasons[0] || 'Recommended for you';
           } else {
@@ -1175,10 +1232,10 @@ class RecommendationEngine {
 
     // Prioritize certain types of reasons
     const priorityOrder = ['social', 'collaborative', 'content-based', 'popularity', 'discovery'];
-    
+
     for (const algorithm of priorityOrder) {
       if (algorithms.includes(algorithm)) {
-        const algorithmReasons = uniqueReasons.filter(reason => 
+        const algorithmReasons = uniqueReasons.filter((reason) =>
           this.reasonBelongsToAlgorithm(reason, algorithm)
         );
         consolidatedReasons.push(...algorithmReasons.slice(0, 1)); // Take top reason per algorithm
@@ -1186,8 +1243,8 @@ class RecommendationEngine {
     }
 
     // Add any remaining unique reasons up to a limit
-    const remainingReasons = uniqueReasons.filter(reason => 
-      !consolidatedReasons.includes(reason)
+    const remainingReasons = uniqueReasons.filter(
+      (reason) => !consolidatedReasons.includes(reason)
     );
     consolidatedReasons.push(...remainingReasons.slice(0, 2));
 
@@ -1204,11 +1261,11 @@ class RecommendationEngine {
       collaborative: ['similar taste', 'similar users', 'coffee enthusiasts'],
       'content-based': ['You enjoy', 'You like', 'You prefer', 'Features', 'Similar to'],
       popularity: ['Popular choice', 'Highly rated', 'stars', 'reviews', 'Trending'],
-      discovery: ['Discover', 'Try a', 'Explore', 'Experience', 'different from', 'new flavors']
+      discovery: ['Discover', 'Try a', 'Explore', 'Experience', 'different from', 'new flavors'],
     };
 
     const keywords = algorithmKeywords[algorithm as keyof typeof algorithmKeywords] || [];
-    return keywords.some(keyword => reason.toLowerCase().includes(keyword.toLowerCase()));
+    return keywords.some((keyword) => reason.toLowerCase().includes(keyword.toLowerCase()));
   }
 }
 

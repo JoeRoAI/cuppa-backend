@@ -38,4 +38,4 @@ export const uploadMultiple = upload.array('images', 5); // Max 5 images
 export const uploadProfileImage = upload.single('profileImage');
 export const uploadReviewImages = upload.array('reviewImages', 5);
 
-export default upload; 
+export default upload;

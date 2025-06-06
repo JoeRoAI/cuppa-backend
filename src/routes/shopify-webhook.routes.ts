@@ -15,4 +15,4 @@ router.post('/inventory', handleInventoryWebhook);
 // Admin-only route for registering webhooks
 router.post('/register', protect, authorize('admin'), registerWebhooks);
 
-export default router; 
+export default router;

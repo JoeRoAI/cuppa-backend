@@ -12,12 +12,15 @@ const uploadAttempts = new Map<string, { count: number; resetTime: number }>();
 /**
  * Rate limiting middleware for image uploads
  */
-export const rateLimitImageUploads = (maxUploads: number = 10, windowMs: number = 15 * 60 * 1000) => {
+export const rateLimitImageUploads = (
+  maxUploads: number = 10,
+  windowMs: number = 15 * 60 * 1000
+) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: 'Authentication required'
+        message: 'Authentication required',
       });
       return;
     }
@@ -37,7 +40,7 @@ export const rateLimitImageUploads = (maxUploads: number = 10, windowMs: number 
       res.status(429).json({
         success: false,
         message: 'Too many upload attempts. Please try again later.',
-        retryAfter: Math.ceil((userAttempts.resetTime - now) / 1000)
+        retryAfter: Math.ceil((userAttempts.resetTime - now) / 1000),
       });
       return;
     }
@@ -60,13 +63,13 @@ export const validateImageFile = async (
   try {
     const files = req.files as Express.Multer.File[] | undefined;
     const file = req.file;
-    
+
     const filesToValidate = files || (file ? [file] : []);
 
     if (filesToValidate.length === 0) {
       res.status(400).json({
         success: false,
-        message: 'No files provided for validation'
+        message: 'No files provided for validation',
       });
       return;
     }
@@ -76,27 +79,32 @@ export const validateImageFile = async (
       if (fileToValidate.size > 5 * 1024 * 1024) {
         res.status(400).json({
           success: false,
-          message: `File ${fileToValidate.originalname} exceeds 5MB limit`
+          message: `File ${fileToValidate.originalname} exceeds 5MB limit`,
         });
         return;
       }
 
       // 2. Validate MIME type and file signature
-      const isValidMimeType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(fileToValidate.mimetype);
+      const isValidMimeType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(
+        fileToValidate.mimetype
+      );
       if (!isValidMimeType) {
         res.status(400).json({
           success: false,
-          message: `Invalid file type: ${fileToValidate.mimetype}. Only JPEG, PNG, and WebP are allowed.`
+          message: `Invalid file type: ${fileToValidate.mimetype}. Only JPEG, PNG, and WebP are allowed.`,
         });
         return;
       }
 
       // 3. Check file signature (magic bytes) to prevent MIME type spoofing
-      const isValidSignature = await validateFileSignature(fileToValidate.buffer, fileToValidate.mimetype);
+      const isValidSignature = await validateFileSignature(
+        fileToValidate.buffer,
+        fileToValidate.mimetype
+      );
       if (!isValidSignature) {
         res.status(400).json({
           success: false,
-          message: `File ${fileToValidate.originalname} has invalid file signature`
+          message: `File ${fileToValidate.originalname} has invalid file signature`,
         });
         return;
       }
@@ -104,12 +112,12 @@ export const validateImageFile = async (
       // 4. Validate image metadata using Sharp
       try {
         const metadata = await sharp(fileToValidate.buffer).metadata();
-        
+
         // Check minimum dimensions
         if (!metadata.width || !metadata.height || metadata.width < 50 || metadata.height < 50) {
           res.status(400).json({
             success: false,
-            message: `Image ${fileToValidate.originalname} is too small. Minimum size is 50x50 pixels.`
+            message: `Image ${fileToValidate.originalname} is too small. Minimum size is 50x50 pixels.`,
           });
           return;
         }
@@ -118,7 +126,7 @@ export const validateImageFile = async (
         if (metadata.width > 4096 || metadata.height > 4096) {
           res.status(400).json({
             success: false,
-            message: `Image ${fileToValidate.originalname} is too large. Maximum size is 4096x4096 pixels.`
+            message: `Image ${fileToValidate.originalname} is too large. Maximum size is 4096x4096 pixels.`,
           });
           return;
         }
@@ -128,22 +136,22 @@ export const validateImageFile = async (
           'image/jpeg': ['jpeg', 'jpg'],
           'image/jpg': ['jpeg', 'jpg'],
           'image/png': ['png'],
-          'image/webp': ['webp']
+          'image/webp': ['webp'],
         };
 
-        const allowedFormats = expectedFormats[fileToValidate.mimetype as keyof typeof expectedFormats];
+        const allowedFormats =
+          expectedFormats[fileToValidate.mimetype as keyof typeof expectedFormats];
         if (!allowedFormats || !allowedFormats.includes(metadata.format || '')) {
           res.status(400).json({
             success: false,
-            message: `File format mismatch for ${fileToValidate.originalname}`
+            message: `File format mismatch for ${fileToValidate.originalname}`,
           });
           return;
         }
-
       } catch (error) {
         res.status(400).json({
           success: false,
-          message: `Invalid or corrupted image: ${fileToValidate.originalname}`
+          message: `Invalid or corrupted image: ${fileToValidate.originalname}`,
         });
         return;
       }
@@ -153,7 +161,7 @@ export const validateImageFile = async (
       if (hasSuspiciousContent) {
         res.status(400).json({
           success: false,
-          message: `File ${fileToValidate.originalname} contains suspicious content`
+          message: `File ${fileToValidate.originalname} contains suspicious content`,
         });
         return;
       }
@@ -164,7 +172,7 @@ export const validateImageFile = async (
     console.error('Error in file validation:', error);
     res.status(500).json({
       success: false,
-      message: 'Error validating uploaded files'
+      message: 'Error validating uploaded files',
     });
   }
 };
@@ -175,13 +183,13 @@ export const validateImageFile = async (
 async function validateFileSignature(buffer: Buffer, mimeType: string): Promise<boolean> {
   const signatures = {
     'image/jpeg': [
-      [0xFF, 0xD8, 0xFF], // JPEG
+      [0xff, 0xd8, 0xff], // JPEG
     ],
     'image/jpg': [
-      [0xFF, 0xD8, 0xFF], // JPEG
+      [0xff, 0xd8, 0xff], // JPEG
     ],
     'image/png': [
-      [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], // PNG
+      [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], // PNG
     ],
     'image/webp': [
       [0x52, 0x49, 0x46, 0x46], // RIFF (WebP container)
@@ -191,7 +199,7 @@ async function validateFileSignature(buffer: Buffer, mimeType: string): Promise<
   const expectedSignatures = signatures[mimeType as keyof typeof signatures];
   if (!expectedSignatures) return false;
 
-  return expectedSignatures.some(signature => {
+  return expectedSignatures.some((signature) => {
     if (buffer.length < signature.length) return false;
     return signature.every((byte, index) => buffer[index] === byte);
   });
@@ -203,7 +211,7 @@ async function validateFileSignature(buffer: Buffer, mimeType: string): Promise<
 async function checkForSuspiciousContent(buffer: Buffer): Promise<boolean> {
   // Convert buffer to string for text-based checks
   const content = buffer.toString('binary');
-  
+
   // Check for common script tags and suspicious patterns
   const suspiciousPatterns = [
     /<script/i,
@@ -219,7 +227,7 @@ async function checkForSuspiciousContent(buffer: Buffer): Promise<boolean> {
     /\x00/, // Null bytes
   ];
 
-  return suspiciousPatterns.some(pattern => pattern.test(content));
+  return suspiciousPatterns.some((pattern) => pattern.test(content));
 }
 
 /**
@@ -263,7 +271,7 @@ export const validateImagePermissions = (operation: 'upload' | 'delete') => {
     if (!req.user) {
       res.status(401).json({
         success: false,
-        message: 'Authentication required'
+        message: 'Authentication required',
       });
       return;
     }
@@ -272,7 +280,7 @@ export const validateImagePermissions = (operation: 'upload' | 'delete') => {
     if (req.user.status === 'suspended' || req.user.status === 'banned') {
       res.status(403).json({
         success: false,
-        message: 'Account suspended. Cannot perform image operations.'
+        message: 'Account suspended. Cannot perform image operations.',
       });
       return;
     }
@@ -282,4 +290,4 @@ export const validateImagePermissions = (operation: 'upload' | 'delete') => {
 
     next();
   };
-}; 
+};

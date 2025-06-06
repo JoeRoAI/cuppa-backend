@@ -42,7 +42,7 @@ router.get('/users', protect, requireRole('admin'), (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Admin access granted',
-    user: req.user
+    user: req.user,
   });
 });
 

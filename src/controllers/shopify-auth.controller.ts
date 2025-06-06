@@ -138,32 +138,32 @@ export const generateMultipassToken = async (
     // Multipass encryption
     // Generate a 16-byte initialization vector
     const iv = crypto.randomBytes(16);
-    
+
     // Create encryption key from Shopify secret
     const multipassSecret = Buffer.from(config.SHOPIFY_API_SECRET, 'utf-8');
     const encryptionKey = crypto.createHash('sha256').update(multipassSecret).digest();
-    
+
     // Encrypt the customer data JSON
     const cipher = crypto.createCipheriv('aes-256-cbc', encryptionKey, iv);
     const jsonData = JSON.stringify(customerData);
     let encrypted = cipher.update(jsonData, 'utf8', 'base64');
     encrypted += cipher.final('base64');
-    
+
     // Compute the signature for the encrypted data with the IV
     const signature = crypto
       .createHmac('sha256', encryptionKey)
       .update(iv.toString('base64') + encrypted)
       .digest('base64');
-    
+
     // Combine the Base64-encoded IV and the encrypted data, separated by a hyphen
     const token = iv.toString('base64') + '-' + encrypted;
-    
+
     // URL-encode the token
     const multipassToken = encodeURIComponent(token);
-    
+
     // Get shop domain from store URL
     const shopDomain = new URL(config.SHOPIFY_STORE_URL).hostname;
-    
+
     // Generate the redirect URL
     const redirectUrl = `https://${shopDomain}/account/login/multipass/${multipassToken}`;
 
@@ -190,16 +190,14 @@ export const generateMultipassToken = async (
  * @access  Private/Admin
  */
 export const getConnectionStatus = async (
-  req: Request, 
-  res: Response, 
+  req: Request,
+  res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     // Check if Shopify API credentials are configured
     const isConfigured = Boolean(
-      config.SHOPIFY_API_KEY && 
-      config.SHOPIFY_API_SECRET && 
-      config.SHOPIFY_STORE_URL
+      config.SHOPIFY_API_KEY && config.SHOPIFY_API_SECRET && config.SHOPIFY_STORE_URL
     );
 
     res.status(200).json({
@@ -255,4 +253,4 @@ export const setAccessToken = async (
       error: error.message,
     });
   }
-}; 
+};

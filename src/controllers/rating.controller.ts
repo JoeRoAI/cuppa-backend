@@ -242,7 +242,7 @@ export const getUserRatings = async (req: Request, res: Response) => {
   try {
     // If user is requesting their own ratings, use req.user.id
     // Otherwise use the userId from the params
-    let userId = req.params.userId;
+    const userId = req.params.userId;
     let showPrivate = false;
 
     // If user is authenticated and requesting their own ratings
@@ -482,4 +482,4 @@ const updateCoffeeAverageRating = async (coffeeId: string) => {
     logger.error(`Error updating coffee average rating: ${error}`);
     throw error;
   }
-}; 
+};

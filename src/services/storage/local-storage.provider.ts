@@ -23,12 +23,7 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async uploadImage(buffer: Buffer, options: UploadOptions = {}): Promise<UploadResult> {
-    const {
-      width = 800,
-      height = 600,
-      quality = 80,
-      format = 'jpeg'
-    } = options;
+    const { width = 800, height = 600, quality = 80, format = 'jpeg' } = options;
 
     // Generate unique filename (this will be our publicId)
     const fileExtension = format === 'jpeg' ? 'jpg' : format;
@@ -40,7 +35,7 @@ export class LocalStorageProvider implements StorageProvider {
     const processedBuffer = await sharp(buffer)
       .resize(width, height, {
         fit: 'inside',
-        withoutEnlargement: true
+        withoutEnlargement: true,
       })
       .toFormat(format as any, { quality })
       .toBuffer();
@@ -68,8 +63,8 @@ export class LocalStorageProvider implements StorageProvider {
     try {
       // Find the file with this publicId
       const files = await fs.readdir(this.uploadDir);
-      const fileToDelete = files.find(file => file.startsWith(publicId));
-      
+      const fileToDelete = files.find((file) => file.startsWith(publicId));
+
       if (fileToDelete) {
         const filePath = path.join(this.uploadDir, fileToDelete);
         await fs.unlink(filePath);
@@ -91,4 +86,4 @@ export class LocalStorageProvider implements StorageProvider {
     // Local storage is always "configured"
     return true;
   }
-} 
+}

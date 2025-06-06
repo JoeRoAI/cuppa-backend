@@ -9,12 +9,12 @@ export class PrivacySettingsService {
   async getPrivacySettings(userId: string): Promise<IPrivacySettings> {
     try {
       let settings = await PrivacySettings.findOne({ userId });
-      
+
       if (!settings) {
         // Create default privacy settings for new users
         settings = await PrivacySettings.create({ userId });
       }
-      
+
       return settings;
     } catch (error) {
       console.error('Error getting privacy settings:', error);
@@ -26,22 +26,18 @@ export class PrivacySettingsService {
    * Update privacy settings for a user
    */
   async updatePrivacySettings(
-    userId: string, 
+    userId: string,
     updates: Partial<IPrivacySettings>
   ): Promise<IPrivacySettings> {
     try {
       // Remove fields that shouldn't be updated directly
       const { userId: _, createdAt, updatedAt, ...allowedUpdates } = updates;
-      
-      const settings = await PrivacySettings.findOneAndUpdate(
-        { userId },
-        allowedUpdates,
-        { 
-          new: true, 
-          upsert: true,
-          runValidators: true 
-        }
-      );
+
+      const settings = await PrivacySettings.findOneAndUpdate({ userId }, allowedUpdates, {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      });
 
       if (!settings) {
         throw new Error('Failed to update privacy settings');
@@ -64,7 +60,7 @@ export class PrivacySettingsService {
       }
 
       const settings = await this.getPrivacySettings(targetUserId);
-      
+
       switch (settings.profileVisibility) {
         case 'public':
           return true;
@@ -91,7 +87,7 @@ export class PrivacySettingsService {
       }
 
       const settings = await this.getPrivacySettings(targetUserId);
-      
+
       switch (settings.activityVisibility) {
         case 'public':
           return true;
@@ -135,7 +131,7 @@ export class PrivacySettingsService {
       }
 
       const settings = await this.getPrivacySettings(targetUserId);
-      
+
       if (!settings.allowComments) {
         return false;
       }
@@ -158,7 +154,7 @@ export class PrivacySettingsService {
       }
 
       const settings = await this.getPrivacySettings(targetUserId);
-      
+
       if (!settings.allowLikes) {
         return false;
       }
@@ -208,7 +204,7 @@ export class PrivacySettingsService {
     try {
       const settings = await this.getPrivacySettings(targetUser._id.toString());
       const canViewProfile = await this.canViewProfile(viewerId, targetUser._id.toString());
-      
+
       if (!canViewProfile) {
         return {
           _id: targetUser._id,
@@ -227,7 +223,7 @@ export class PrivacySettingsService {
       };
 
       // Remove undefined fields
-      Object.keys(filteredUser).forEach(key => {
+      Object.keys(filteredUser).forEach((key) => {
         if (filteredUser[key] === undefined) {
           delete filteredUser[key];
         }
@@ -248,13 +244,13 @@ export class PrivacySettingsService {
       const connection1 = await SocialConnection.findOne({
         followerId: userId1,
         followedId: userId2,
-        status: 'active'
+        status: 'active',
       });
 
       const connection2 = await SocialConnection.findOne({
         followerId: userId2,
         followedId: userId1,
-        status: 'active'
+        status: 'active',
       });
 
       return !!(connection1 && connection2);
@@ -295,11 +291,11 @@ export class PrivacySettingsService {
   async getBulkPrivacySettings(userIds: string[]): Promise<Map<string, IPrivacySettings>> {
     try {
       const settings = await PrivacySettings.find({
-        userId: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) }
+        userId: { $in: userIds.map((id) => new mongoose.Types.ObjectId(id)) },
       });
 
       const settingsMap = new Map<string, IPrivacySettings>();
-      
+
       for (const setting of settings) {
         settingsMap.set(setting.userId.toString(), setting);
       }
@@ -320,4 +316,4 @@ export class PrivacySettingsService {
   }
 }
 
-export default new PrivacySettingsService(); 
+export default new PrivacySettingsService();

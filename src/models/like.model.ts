@@ -7,11 +7,11 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 // Interface for Like documents
 export interface ILike extends Document {
-  userId: mongoose.Types.ObjectId;      // User who created the like
-  targetId: mongoose.Types.ObjectId;    // ID of the liked content
-  targetType: string;                   // Type of content (Coffee, Review, Comment)
+  userId: mongoose.Types.ObjectId; // User who created the like
+  targetId: mongoose.Types.ObjectId; // ID of the liked content
+  targetType: string; // Type of content (Coffee, Review, Comment)
   createdAt: Date;
-  isActive: boolean;                    // Flag to track "unliked" items
+  isActive: boolean; // Flag to track "unliked" items
 }
 
 // Schema for likes
@@ -35,10 +35,10 @@ const LikeSchema: Schema = new Schema(
     isActive: {
       type: Boolean,
       default: true,
-    }
+    },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false }
+    timestamps: { createdAt: true, updatedAt: false },
   }
 );
 
@@ -49,4 +49,4 @@ LikeSchema.index({ userId: 1, targetId: 1, targetType: 1 }, { unique: true });
 LikeSchema.index({ targetId: 1, targetType: 1, isActive: 1 });
 
 // Create and export the model
-export const Like = mongoose.model<ILike>('Like', LikeSchema); 
+export const Like = mongoose.model<ILike>('Like', LikeSchema);

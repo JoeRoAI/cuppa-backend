@@ -125,9 +125,9 @@ RatingSchema.index({ coffeeId: 1, createdAt: -1 });
 RatingSchema.index({ userId: 1, createdAt: -1 });
 
 // Virtual for calculating the total score (SCA inspired but simplified)
-RatingSchema.virtual('totalScore').get(function(this: IRatingDocument) {
+RatingSchema.virtual('totalScore').get(function (this: IRatingDocument) {
   let total = this.overall * 2; // Overall rating is weighted more
-  
+
   // Add all specified dimensions with proper type checking
   if (this.aroma !== undefined) total += this.aroma;
   if (this.flavor !== undefined) total += this.flavor;
@@ -138,17 +138,23 @@ RatingSchema.virtual('totalScore').get(function(this: IRatingDocument) {
   if (this.uniformity !== undefined) total += this.uniformity;
   if (this.cleanCup !== undefined) total += this.cleanCup;
   if (this.sweetness !== undefined) total += this.sweetness;
-  
+
   // Count how many dimensions were provided
   const dimensionCount = [
-    this.aroma, this.flavor, this.aftertaste, 
-    this.acidity, this.body, this.balance,
-    this.uniformity, this.cleanCup, this.sweetness
+    this.aroma,
+    this.flavor,
+    this.aftertaste,
+    this.acidity,
+    this.body,
+    this.balance,
+    this.uniformity,
+    this.cleanCup,
+    this.sweetness,
   ].filter((val): val is number => val !== undefined).length;
-  
+
   // Calculate weighted average
   const weightedTotal = total / (dimensionCount + 2); // +2 for the overall rating (weighted x2)
-  
+
   // Normalize to a 100 point scale (like SCA)
   return Math.round(weightedTotal * 20);
 });

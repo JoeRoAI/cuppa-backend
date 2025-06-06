@@ -74,15 +74,17 @@ class WebSocketService extends EventEmitter {
 
     this.io.use(async (socket: AuthenticatedSocket, next) => {
       try {
-        const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
-        
+        const token =
+          socket.handshake.auth.token ||
+          socket.handshake.headers.authorization?.replace('Bearer ', '');
+
         if (!token) {
           return next(new Error('Authentication token required'));
         }
 
         // Verify JWT token
         const decoded = jwt.verify(token, config.JWT_SECRET) as any;
-        
+
         if (!decoded.id) {
           return next(new Error('Invalid token payload'));
         }
@@ -170,7 +172,7 @@ class WebSocketService extends EventEmitter {
 
     // Remove from tracking
     this.connectedUsers.delete(socketId);
-    
+
     const userSocketSet = this.userSockets.get(userId);
     if (userSocketSet) {
       userSocketSet.delete(socketId);
@@ -201,7 +203,7 @@ class WebSocketService extends EventEmitter {
 
         if (success) {
           socket.emit('notification:read:success', { notificationId: data.notificationId });
-          
+
           // Broadcast to all user's sockets
           this.broadcastToUser(socket.userId.toString(), 'notification:updated', {
             notificationId: data.notificationId,
@@ -220,21 +222,23 @@ class WebSocketService extends EventEmitter {
 
       try {
         const count = await NotificationService.markAllAsRead(socket.userId);
-        
+
         socket.emit('notification:readAll:success', { count });
-        
+
         // Broadcast to all user's sockets
         this.broadcastToUser(socket.userId.toString(), 'notification:allRead', { count });
       } catch (error) {
         logger.error('Error marking all notifications as read:', error);
-        socket.emit('notification:readAll:error', { error: 'Failed to mark all notifications as read' });
+        socket.emit('notification:readAll:error', {
+          error: 'Failed to mark all notifications as read',
+        });
       }
     });
 
     // Handle activity feed refresh
     socket.on('activityFeed:refresh', () => {
       if (!socket.userId) return;
-      
+
       // Emit refresh event to trigger feed reload
       socket.emit('activityFeed:refreshRequested');
     });
@@ -293,7 +297,6 @@ class WebSocketService extends EventEmitter {
         userId: socket.userId,
         timestamp: new Date(),
       });
-
     } catch (error) {
       logger.error('Error sending initial data:', error);
     }
@@ -319,9 +322,12 @@ class WebSocketService extends EventEmitter {
   /**
    * Handle new notification
    */
-  private handleNewNotification(data: { notification: any; userId: mongoose.Types.ObjectId }): void {
+  private handleNewNotification(data: {
+    notification: any;
+    userId: mongoose.Types.ObjectId;
+  }): void {
     const userId = data.userId.toString();
-    
+
     // Send to all user's connected sockets
     this.broadcastToUser(userId, 'notification:new', {
       notification: data.notification,
@@ -334,9 +340,12 @@ class WebSocketService extends EventEmitter {
   /**
    * Handle notification read
    */
-  private handleNotificationRead(data: { notificationId: mongoose.Types.ObjectId; userId: mongoose.Types.ObjectId }): void {
+  private handleNotificationRead(data: {
+    notificationId: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
+  }): void {
     const userId = data.userId.toString();
-    
+
     this.broadcastToUser(userId, 'notification:read', {
       notificationId: data.notificationId.toString(),
     });
@@ -347,9 +356,12 @@ class WebSocketService extends EventEmitter {
   /**
    * Handle all notifications read
    */
-  private handleAllNotificationsRead(data: { userId: mongoose.Types.ObjectId; count: number }): void {
+  private handleAllNotificationsRead(data: {
+    userId: mongoose.Types.ObjectId;
+    count: number;
+  }): void {
     const userId = data.userId.toString();
-    
+
     this.broadcastToUser(userId, 'notification:allRead', {
       count: data.count,
     });
@@ -433,7 +445,7 @@ class WebSocketService extends EventEmitter {
     if (!this.io) return;
 
     const socketIds = this.getUserSockets(userId);
-    socketIds.forEach(socketId => {
+    socketIds.forEach((socketId) => {
       const socket = this.io!.sockets.sockets.get(socketId);
       if (socket) {
         socket.disconnect(true);
@@ -454,7 +466,7 @@ class WebSocketService extends EventEmitter {
     let totalConnectionTime = 0;
     let connectionCount = 0;
 
-    this.connectedUsers.forEach(user => {
+    this.connectedUsers.forEach((user) => {
       totalConnectionTime += now.getTime() - user.connectedAt.getTime();
       connectionCount++;
     });
@@ -484,7 +496,7 @@ class WebSocketService extends EventEmitter {
       }
     });
 
-    inactiveConnections.forEach(socketId => {
+    inactiveConnections.forEach((socketId) => {
       const socket = this.io!.sockets.sockets.get(socketId);
       if (socket) {
         socket.disconnect(true);
@@ -497,4 +509,4 @@ class WebSocketService extends EventEmitter {
   }
 }
 
-export default WebSocketService.getInstance(); 
+export default WebSocketService.getInstance();

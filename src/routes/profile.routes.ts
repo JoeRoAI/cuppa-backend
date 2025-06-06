@@ -1,4 +1,4 @@
-import express from 'express';
+import { Router } from 'express';
 import {
   getProfile,
   updateProfile,
@@ -9,10 +9,19 @@ import {
   verifyPhone,
   requestAccountDeletion,
   confirmAccountDeletion,
+  uploadProfileImage,
+  updatePreferences,
+  getUserStats,
+  getUserBadges,
 } from '../controllers/profile.controller';
 import { protect, authorize } from '../middleware/auth.middleware';
+import multer from 'multer';
 
-const router = express.Router();
+const router: Router = Router();
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // Protect all routes
 router.use(protect);
@@ -20,6 +29,8 @@ router.use(protect);
 // Profile routes
 router.get('/', getProfile);
 router.put('/', updateProfile);
+router.post('/image', upload.single('image'), uploadProfileImage);
+router.put('/preferences', updatePreferences);
 
 // Password update
 router.put('/password', updatePassword);
@@ -35,5 +46,9 @@ router.post('/verify-phone/:token', verifyPhone);
 // Account deletion
 router.delete('/', requestAccountDeletion);
 router.delete('/confirm/:token', confirmAccountDeletion);
+
+// User stats and badges
+router.get('/stats', getUserStats);
+router.get('/badges', getUserBadges);
 
 export default router;

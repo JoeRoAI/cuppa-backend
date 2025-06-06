@@ -13,13 +13,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
   }
 
   async uploadImage(buffer: Buffer, options: UploadOptions = {}): Promise<UploadResult> {
-    const {
-      folder = 'cuppa',
-      width,
-      height,
-      quality = 'auto',
-      format = 'auto'
-    } = options;
+    const { folder = 'cuppa', width, height, quality = 'auto', format = 'auto' } = options;
 
     // Build transformation options
     const transformation: any = {
@@ -35,17 +29,19 @@ export class CloudinaryStorageProvider implements StorageProvider {
 
     try {
       const result = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          {
-            folder,
-            transformation,
-            resource_type: 'image',
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        ).end(buffer);
+        cloudinary.uploader
+          .upload_stream(
+            {
+              folder,
+              transformation,
+              resource_type: 'image',
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          )
+          .end(buffer);
       });
 
       return {
@@ -73,12 +69,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
   }
 
   generateUrl(publicId: string, options: UploadOptions = {}): string {
-    const {
-      width,
-      height,
-      quality = 'auto',
-      format = 'auto'
-    } = options;
+    const { width, height, quality = 'auto', format = 'auto' } = options;
 
     const transformation: any = {
       quality,
@@ -104,4 +95,4 @@ export class CloudinaryStorageProvider implements StorageProvider {
       process.env.CLOUDINARY_API_SECRET
     );
   }
-} 
+}

@@ -682,7 +682,7 @@ export const getRecommendedCoffees = async (
           roastLevel: 'Medium',
           origin: { country: 'Colombia', region: 'Huila' },
           flavorNotes: ['Chocolate', 'Caramel', 'Nutty'],
-          prices: [{ amount: 16.50, size: '12oz', unit: 'bag' }],
+          prices: [{ amount: 16.5, size: '12oz', unit: 'bag' }],
           categories: ['Single Origin', 'Medium Roast'],
           rating: 4.6,
           description: 'A well-balanced coffee with chocolate and caramel notes',
@@ -697,7 +697,7 @@ export const getRecommendedCoffees = async (
           roastLevel: 'Medium-Dark',
           origin: { country: 'Blend', region: 'Various' },
           flavorNotes: ['Rich', 'Smooth', 'Balanced'],
-          prices: [{ amount: 15.00, size: '12oz', unit: 'bag' }],
+          prices: [{ amount: 15.0, size: '12oz', unit: 'bag' }],
           categories: ['Blend', 'Medium-Dark Roast'],
           rating: 4.4,
           description: 'A rich and smooth house blend perfect for everyday drinking',
@@ -717,10 +717,7 @@ export const getRecommendedCoffees = async (
 
     // For real database - get highly rated coffees or featured coffees
     const recommendedCoffees = await Coffee.find({
-      $or: [
-        { rating: { $gte: 4.5 } },
-        { categories: { $in: ['Featured', 'Popular'] } },
-      ],
+      $or: [{ rating: { $gte: 4.5 } }, { categories: { $in: ['Featured', 'Popular'] } }],
     })
       .sort({ rating: -1, createdAt: -1 })
       .limit(6);

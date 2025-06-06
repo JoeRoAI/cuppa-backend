@@ -7,11 +7,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 // Types of activities that can be tracked
-export type ActivityType = 
-  | 'follow' 
-  | 'like' 
-  | 'comment' 
-  | 'review' 
+export type ActivityType =
+  | 'follow'
+  | 'like'
+  | 'comment'
+  | 'review'
   | 'checkin'
   | 'share'
   | 'recommendation'
@@ -20,17 +20,17 @@ export type ActivityType =
 
 // Interface for Activity documents
 export interface IActivity extends Document {
-  userId: mongoose.Types.ObjectId;      // User who performed the activity
-  activityType: ActivityType;           // Type of activity
-  targetId?: mongoose.Types.ObjectId;   // Target object of the activity (post, user, coffee, etc.)
-  targetType?: string;                  // Type of target (user, coffee, post, etc.)
+  userId: mongoose.Types.ObjectId; // User who performed the activity
+  activityType: ActivityType; // Type of activity
+  targetId?: mongoose.Types.ObjectId; // Target object of the activity (post, user, coffee, etc.)
+  targetType?: string; // Type of target (user, coffee, post, etc.)
   targetUserId?: mongoose.Types.ObjectId; // If activity involves another user
-  content?: string;                     // Optional content (comment text, review content)
-  metadata?: Record<string, any>;       // Additional activity-specific data
+  content?: string; // Optional content (comment text, review content)
+  metadata?: Record<string, any>; // Additional activity-specific data
   visibility: 'public' | 'followers' | 'private'; // Activity visibility settings
   createdAt: Date;
   updatedAt: Date;
-  isDeleted: boolean;                   // Soft delete flag
+  isDeleted: boolean; // Soft delete flag
 }
 
 // Schema for Activity
@@ -45,15 +45,15 @@ const ActivitySchema: Schema = new Schema(
       type: String,
       required: true,
       enum: [
-        'follow', 
-        'like', 
-        'comment', 
-        'review', 
+        'follow',
+        'like',
+        'comment',
+        'review',
         'checkin',
         'share',
         'recommendation',
         'badge_earned',
-        'profile_update'
+        'profile_update',
       ],
     },
     targetId: {
@@ -70,10 +70,10 @@ const ActivitySchema: Schema = new Schema(
     },
     content: {
       type: String,
-      trim: true
+      trim: true,
     },
     metadata: {
-      type: Schema.Types.Mixed
+      type: Schema.Types.Mixed,
     },
     visibility: {
       type: String,
@@ -83,10 +83,10 @@ const ActivitySchema: Schema = new Schema(
     isDeleted: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
@@ -96,4 +96,4 @@ ActivitySchema.index({ targetUserId: 1, createdAt: -1 });
 ActivitySchema.index({ activityType: 1, createdAt: -1 });
 
 // Create and export the model
-export const Activity = mongoose.model<IActivity>('Activity', ActivitySchema); 
+export const Activity = mongoose.model<IActivity>('Activity', ActivitySchema);

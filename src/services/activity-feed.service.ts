@@ -35,10 +35,12 @@ class ActivityFeedService {
         activityType,
         targetId: options.targetId ? new mongoose.Types.ObjectId(options.targetId) : undefined,
         targetType: options.targetType,
-        targetUserId: options.targetUserId ? new mongoose.Types.ObjectId(options.targetUserId) : undefined,
+        targetUserId: options.targetUserId
+          ? new mongoose.Types.ObjectId(options.targetUserId)
+          : undefined,
         content: options.content,
         metadata: options.metadata,
-        visibility: options.visibility || 'public'
+        visibility: options.visibility || 'public',
       });
 
       // Save to database
@@ -46,7 +48,7 @@ class ActivityFeedService {
 
       // Invalidate cache for this user and their followers
       this.invalidateUserFeedCache(userId);
-      
+
       // If target is another user (for follow events), invalidate their cache too
       if (options.targetUserId) {
         this.invalidateUserFeedCache(options.targetUserId);
@@ -65,14 +67,14 @@ class ActivityFeedService {
   private async invalidateUserFeedCache(userId: string): Promise<void> {
     // Invalidate user's own feed cache
     activityFeedCache.del(`feed_${userId}`);
-    
+
     // Find all followers and invalidate their caches
     try {
-      const followers = await SocialConnection.find({ 
+      const followers = await SocialConnection.find({
         followedId: new mongoose.Types.ObjectId(userId),
-        status: 'active'
+        status: 'active',
       }).select('followerId');
-      
+
       for (const follower of followers) {
         activityFeedCache.del(`feed_${follower.followerId}`);
       }
@@ -98,11 +100,11 @@ class ActivityFeedService {
   }> {
     const { page = 1, limit = 20 } = options;
     const skip = (page - 1) * limit;
-    
+
     // Try to get from cache first
     const cacheKey = `feed_${userId}_${page}_${limit}_${options.activityTypes?.join('_') || 'all'}`;
     const cachedFeed = activityFeedCache.get(cacheKey);
-    
+
     if (cachedFeed) {
       return cachedFeed as {
         activities: IActivity[];
@@ -113,42 +115,42 @@ class ActivityFeedService {
 
     try {
       // Find all users this user follows
-      const followedUsers = await SocialConnection.find({ 
+      const followedUsers = await SocialConnection.find({
         followerId: new mongoose.Types.ObjectId(userId),
-        status: 'active'
+        status: 'active',
       }).select('followedId');
-      
+
       // Get IDs of followed users
-      const followedIds = followedUsers.map(f => f.followedId);
-      
+      const followedIds = followedUsers.map((f) => f.followedId);
+
       // Add user's own ID to include their activities
       followedIds.push(new mongoose.Types.ObjectId(userId));
-      
+
       // Build the query
-      let query: any = {
+      const query: any = {
         $or: [
           // Activities from followed users that are public or for followers
-          { 
+          {
             userId: { $in: followedIds },
             visibility: { $in: ['public', 'followers'] },
-            isDeleted: false
+            isDeleted: false,
           },
           // Activities where this user is the target
           {
             targetUserId: new mongoose.Types.ObjectId(userId),
-            isDeleted: false
-          }
-        ]
+            isDeleted: false,
+          },
+        ],
       };
-      
+
       // Filter by activity type if specified
       if (options.activityTypes && options.activityTypes.length > 0) {
         query.activityType = { $in: options.activityTypes };
       }
-      
+
       // Execute count query for pagination
       const totalCount = await Activity.countDocuments(query);
-      
+
       // Get activities with pagination
       const activities = await Activity.find(query)
         .sort({ createdAt: -1 })
@@ -156,16 +158,16 @@ class ActivityFeedService {
         .limit(limit)
         .populate('userId', 'name socialProfile.avatar')
         .populate('targetUserId', 'name socialProfile.avatar');
-      
+
       const result = {
         activities,
         totalCount,
-        hasMore: totalCount > skip + limit
+        hasMore: totalCount > skip + limit,
       };
-      
+
       // Store in cache
       activityFeedCache.set(cacheKey, result);
-      
+
       return result;
     } catch (error) {
       console.error('Error generating user feed:', error);
@@ -191,11 +193,11 @@ class ActivityFeedService {
   }> {
     const { page = 1, limit = 20 } = options;
     const skip = (page - 1) * limit;
-    
+
     try {
       // Determine visibility level based on relationship
       let visibilityLevel: ('public' | 'followers' | 'private')[] = ['public'];
-      
+
       if (viewerUserId) {
         if (viewerUserId === profileUserId) {
           // User viewing their own profile - show all activities
@@ -205,30 +207,30 @@ class ActivityFeedService {
           const isFollowing = await SocialConnection.findOne({
             followerId: new mongoose.Types.ObjectId(viewerUserId),
             followedId: new mongoose.Types.ObjectId(profileUserId),
-            status: 'active'
+            status: 'active',
           });
-          
+
           if (isFollowing) {
             visibilityLevel = ['public', 'followers'];
           }
         }
       }
-      
+
       // Build query
-      let query: any = {
+      const query: any = {
         userId: new mongoose.Types.ObjectId(profileUserId),
         visibility: { $in: visibilityLevel },
-        isDeleted: false
+        isDeleted: false,
       };
-      
+
       // Filter by activity type if specified
       if (options.activityTypes && options.activityTypes.length > 0) {
         query.activityType = { $in: options.activityTypes };
       }
-      
+
       // Execute count query for pagination
       const totalCount = await Activity.countDocuments(query);
-      
+
       // Get activities with pagination
       const activities = await Activity.find(query)
         .sort({ createdAt: -1 })
@@ -236,11 +238,11 @@ class ActivityFeedService {
         .limit(limit)
         .populate('userId', 'name socialProfile.avatar')
         .populate('targetUserId', 'name socialProfile.avatar');
-      
+
       return {
         activities,
         totalCount,
-        hasMore: totalCount > skip + limit
+        hasMore: totalCount > skip + limit,
       };
     } catch (error) {
       console.error('Error getting user profile activities:', error);
@@ -254,23 +256,23 @@ class ActivityFeedService {
   async deleteActivity(activityId: string, userId: string): Promise<boolean> {
     try {
       const activity = await Activity.findById(activityId);
-      
+
       if (!activity) {
         throw new Error('Activity not found');
       }
-      
+
       // Check if user owns the activity
       if (activity.userId.toString() !== userId) {
         throw new Error('Unauthorized to delete this activity');
       }
-      
+
       // Soft delete
       activity.isDeleted = true;
       await activity.save();
-      
+
       // Invalidate cache
       this.invalidateUserFeedCache(userId);
-      
+
       return true;
     } catch (error) {
       console.error('Error deleting activity:', error);
@@ -287,17 +289,17 @@ class ActivityFeedService {
         {
           $match: {
             userId: new mongoose.Types.ObjectId(userId),
-            isDeleted: false
-          }
+            isDeleted: false,
+          },
         },
         {
           $group: {
             _id: '$activityType',
-            count: { $sum: 1 }
-          }
-        }
+            count: { $sum: 1 },
+          },
+        },
       ]);
-      
+
       // Initialize all activity types with 0
       const result: Record<ActivityType, number> = {
         follow: 0,
@@ -308,14 +310,14 @@ class ActivityFeedService {
         share: 0,
         recommendation: 0,
         badge_earned: 0,
-        profile_update: 0
+        profile_update: 0,
       };
-      
+
       // Fill in actual counts
-      stats.forEach(stat => {
+      stats.forEach((stat) => {
         result[stat._id as ActivityType] = stat.count;
       });
-      
+
       return result;
     } catch (error) {
       console.error('Error getting user activity stats:', error);
@@ -324,4 +326,4 @@ class ActivityFeedService {
   }
 }
 
-export default new ActivityFeedService(); 
+export default new ActivityFeedService();

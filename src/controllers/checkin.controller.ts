@@ -37,7 +37,7 @@ export const createCheckIn = async (req: AuthRequest, res: Response) => {
 
     // Handle special case for "home" check-ins
     let actualShopId: mongoose.Types.ObjectId;
-    
+
     if (shopId === 'home') {
       // Create a special ObjectId for home check-ins or use a default one
       // Using a consistent ObjectId for all home check-ins
@@ -61,7 +61,9 @@ export const createCheckIn = async (req: AuthRequest, res: Response) => {
       purchasedItem: req.body.purchasedItem,
       notes: req.body.notes,
       images: req.body.images || [],
-      location: req.body.location || (shopId === 'home' ? { type: 'Point', coordinates: [0, 0], address: 'Home' } : undefined),
+      location:
+        req.body.location ||
+        (shopId === 'home' ? { type: 'Point', coordinates: [0, 0], address: 'Home' } : undefined),
       brewMethod: req.body.brewMethod,
       tags: req.body.tags || [],
       isPublic: req.body.isPublic !== undefined ? req.body.isPublic : true,
@@ -122,9 +124,9 @@ export const getShopCheckIns = async (req: Request, res: Response) => {
     }
 
     // Get check-ins for the shop
-    const checkIns = await CheckIn.find({ 
+    const checkIns = await CheckIn.find({
       shopId: new mongoose.Types.ObjectId(shopId),
-      isPublic: true // Only return public check-ins
+      isPublic: true, // Only return public check-ins
     })
       .sort({ createdAt: -1 })
       .skip(Number(offset))
@@ -133,9 +135,9 @@ export const getShopCheckIns = async (req: Request, res: Response) => {
       .populate('coffeeId', 'name roaster origin roastLevel')
       .lean();
 
-    const total = await CheckIn.countDocuments({ 
+    const total = await CheckIn.countDocuments({
       shopId: new mongoose.Types.ObjectId(shopId),
-      isPublic: true
+      isPublic: true,
     });
 
     res.status(200).json({
@@ -340,4 +342,4 @@ export const updateCheckIn = async (req: AuthRequest, res: Response) => {
       error: error.message,
     });
   }
-}; 
+};

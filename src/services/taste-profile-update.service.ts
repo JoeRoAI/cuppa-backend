@@ -5,7 +5,10 @@
  */
 
 import mongoose from 'mongoose';
-import TasteProfile, { ITasteProfileDocument, CoffeeAttribute } from '../models/taste-profile.model';
+import TasteProfile, {
+  ITasteProfileDocument,
+  CoffeeAttribute,
+} from '../models/taste-profile.model';
 import Rating, { IRatingDocument } from '../models/rating.model';
 import TasteProfileAggregationService from './taste-profile-aggregation.service';
 import logger from '../utils/logger';
@@ -41,7 +44,7 @@ class TasteProfileUpdateService {
     maxRetries: 3,
     retryDelay: 1000, // 1 second
     enableRealTimeUpdates: true,
-    enableBatchUpdates: true
+    enableBatchUpdates: true,
   };
   private static updateHistory: Map<string, any[]> = new Map();
   private static processingUsers: Set<string> = new Set();
@@ -70,7 +73,7 @@ class TasteProfileUpdateService {
         triggerType,
         ratingId,
         metadata,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // For manual triggers or deletions, process immediately
@@ -82,7 +85,6 @@ class TasteProfileUpdateService {
       // For other triggers, use debouncing
       this.queueUpdate(userId, trigger);
       return { queued: true, immediate: false, reason: 'Queued for debounced processing' };
-
     } catch (error) {
       logger.error(`Error triggering update for user ${userId}:`, error);
       throw error;
@@ -131,7 +133,6 @@ class TasteProfileUpdateService {
       this.debounceTimers.delete(userId);
 
       await this.executeUpdate(userId, trigger);
-
     } catch (error) {
       logger.error(`Error processing update for user ${userId}:`, error);
     } finally {
@@ -147,7 +148,9 @@ class TasteProfileUpdateService {
       logger.info(`Executing profile update for user ${userId}`, { trigger });
 
       // Get current profile and recent ratings
-      const currentProfile = await TasteProfile.findOne({ userId: new mongoose.Types.ObjectId(userId) });
+      const currentProfile = await TasteProfile.findOne({
+        userId: new mongoose.Types.ObjectId(userId),
+      });
       const recentRatings = await Rating.find({ userId: new mongoose.Types.ObjectId(userId) })
         .sort({ createdAt: -1 })
         .limit(100);
@@ -173,32 +176,31 @@ class TasteProfileUpdateService {
         trigger,
         updateType,
         result: result ? 'success' : 'failed',
-        details: result
+        details: result,
       };
 
       const userHistory = this.updateHistory.get(userId) || [];
       userHistory.push(historyEntry);
-      
+
       // Keep only last 50 entries per user
       if (userHistory.length > 50) {
         userHistory.shift();
       }
-      
+
       this.updateHistory.set(userId, userHistory);
 
       logger.info(`Profile update completed for user ${userId}`, { updateType, result });
       return result;
-
     } catch (error) {
       logger.error(`Error executing profile update for user ${userId}:`, error);
-      
+
       // Record failed attempt in history
       const historyEntry = {
         timestamp: new Date(),
         trigger,
         updateType: 'failed',
         result: 'error',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
 
       const userHistory = this.updateHistory.get(userId) || [];
@@ -223,8 +225,8 @@ class TasteProfileUpdateService {
 
     // Check if enough new ratings to warrant update
     const lastUpdate = currentProfile.lastCalculated;
-    const newRatings = recentRatings.filter(r => r.createdAt > lastUpdate);
-    
+    const newRatings = recentRatings.filter((r) => r.createdAt > lastUpdate);
+
     if (newRatings.length === 0) {
       return 'skipped';
     }
@@ -233,7 +235,8 @@ class TasteProfileUpdateService {
     const ratingsRatio = newRatings.length / currentProfile.totalRatings;
     const hoursSinceUpdate = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
 
-    if (ratingsRatio > 0.2 || hoursSinceUpdate > 168) { // 20% new ratings or 1 week old
+    if (ratingsRatio > 0.2 || hoursSinceUpdate > 168) {
+      // 20% new ratings or 1 week old
       return 'full';
     }
 
@@ -267,15 +270,14 @@ class TasteProfileUpdateService {
             totalRatings: totalRatings,
             lastRatingDate: newRatings[0]?.createdAt || currentProfile.lastRatingDate,
             lastCalculated: new Date(),
-            'ratingPatterns.averageOverallRating': newAverageRating
-          }
+            'ratingPatterns.averageOverallRating': newAverageRating,
+          },
         },
         { new: true }
       );
 
       logger.info(`Partial update completed for profile ${currentProfile._id}`);
       return updatedProfile!;
-
     } catch (error) {
       logger.error('Error performing partial update:', error);
       throw error;
@@ -291,11 +293,11 @@ class TasteProfileUpdateService {
     newRatings: IRatingDocument[]
   ): number {
     if (newRatings.length === 0) return currentAverage;
-    
+
     const newRatingsSum = newRatings.reduce((sum, rating) => sum + rating.overall, 0);
-    const totalSum = (currentAverage * currentCount) + newRatingsSum;
+    const totalSum = currentAverage * currentCount + newRatingsSum;
     const totalCount = currentCount + newRatings.length;
-    
+
     return totalSum / totalCount;
   }
 
@@ -312,14 +314,14 @@ class TasteProfileUpdateService {
       userId,
       triggerType: trigger.triggerType,
       scheduledAt: trigger.timestamp,
-      ratingId: trigger.ratingId
+      ratingId: trigger.ratingId,
     }));
 
     return {
       queueSize: this.updateQueue.size,
       processingCount: this.processingUsers.size,
       queueDetails,
-      configuration: { ...this.config }
+      configuration: { ...this.config },
     };
   }
 
@@ -336,9 +338,9 @@ class TasteProfileUpdateService {
   static updateConfiguration(newConfig: Partial<UpdateConfiguration>): UpdateConfiguration {
     this.config = {
       ...this.config,
-      ...newConfig
+      ...newConfig,
     };
-    
+
     logger.info('Taste profile update configuration updated', newConfig);
     return { ...this.config };
   }
@@ -357,20 +359,20 @@ class TasteProfileUpdateService {
 
     // Process all queued updates
     const queueEntries = Array.from(this.updateQueue.entries());
-    
+
     for (const [userId, trigger] of queueEntries) {
       try {
         const result = await this.executeUpdate(userId, trigger);
         results.push({ userId, success: true, result });
         processed++;
-        
+
         // Remove from queue after successful processing
         this.updateQueue.delete(userId);
       } catch (error) {
-        results.push({ 
-          userId, 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+        results.push({
+          userId,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
         failed++;
         logger.error(`Failed to process update for user ${userId}:`, error);
@@ -378,11 +380,11 @@ class TasteProfileUpdateService {
     }
 
     logger.info(`Processed ${processed} updates, ${failed} failed`);
-    
+
     return {
       processed,
       failed,
-      results
+      results,
     };
   }
 
@@ -390,8 +392,8 @@ class TasteProfileUpdateService {
    * Get update history for a user
    */
   static getUpdateHistory(
-    userId: string, 
-    limit: number = 10, 
+    userId: string,
+    limit: number = 10,
     offset: number = 0
   ): {
     updates: any[];
@@ -400,14 +402,12 @@ class TasteProfileUpdateService {
   } {
     const userHistory = this.updateHistory.get(userId) || [];
     const total = userHistory.length;
-    const updates = userHistory
-      .slice(offset, offset + limit)
-      .reverse(); // Most recent first
+    const updates = userHistory.slice(offset, offset + limit).reverse(); // Most recent first
 
     return {
       updates,
       total,
-      hasMore: offset + limit < total
+      hasMore: offset + limit < total,
     };
   }
 
@@ -416,7 +416,7 @@ class TasteProfileUpdateService {
    */
   static clearQueue(): void {
     this.updateQueue.clear();
-    this.debounceTimers.forEach(timer => clearTimeout(timer));
+    this.debounceTimers.forEach((timer) => clearTimeout(timer));
     this.debounceTimers.clear();
     this.processingUsers.clear();
     logger.info('Update queue cleared');
@@ -434,18 +434,18 @@ class TasteProfileUpdateService {
     let totalUpdates = 0;
     let totalErrors = 0;
 
-    this.updateHistory.forEach(history => {
+    this.updateHistory.forEach((history) => {
       totalUpdates += history.length;
-      totalErrors += history.filter(entry => entry.result === 'error').length;
+      totalErrors += history.filter((entry) => entry.result === 'error').length;
     });
 
     return {
       totalUpdatesProcessed: totalUpdates,
       averageProcessingTime: 0, // TODO: Implement timing tracking
       errorRate: totalUpdates > 0 ? (totalErrors / totalUpdates) * 100 : 0,
-      activeUsers: this.updateHistory.size
+      activeUsers: this.updateHistory.size,
     };
   }
 }
 
-export default TasteProfileUpdateService; 
+export default TasteProfileUpdateService;

@@ -12,7 +12,7 @@ export enum CoffeeAttribute {
   AFTERTASTE = 'aftertaste',
   BALANCE = 'balance',
   UNIFORMITY = 'uniformity',
-  CLEAN_CUP = 'cleanCup'
+  CLEAN_CUP = 'cleanCup',
 }
 
 /**
@@ -21,9 +21,9 @@ export enum CoffeeAttribute {
 export interface IPreferredAttribute {
   attribute: CoffeeAttribute;
   preferenceScore: number; // 0-100: How much the user likes this attribute
-  confidence: number;      // 0-100: Confidence in this preference based on data
-  averageRating: number;   // Average rating for this attribute
-  ratingCount: number;     // Number of ratings for this attribute
+  confidence: number; // 0-100: Confidence in this preference based on data
+  averageRating: number; // Average rating for this attribute
+  ratingCount: number; // Number of ratings for this attribute
 }
 
 /**
@@ -31,9 +31,9 @@ export interface IPreferredAttribute {
  */
 export interface IPreferredFlavorProfile {
   flavorNote: string;
-  frequency: number;       // How often this appears in user's highly-rated coffees
+  frequency: number; // How often this appears in user's highly-rated coffees
   preferenceScore: number; // 0-100: How much the user likes this flavor
-  averageRating: number;   // Average overall rating when this flavor is present
+  averageRating: number; // Average overall rating when this flavor is present
 }
 
 /**
@@ -70,7 +70,7 @@ export interface IRatingPatterns {
   averageOverallRating: number;
   ratingVariance: number;
   mostActiveTimeOfDay?: number; // Hour of day (0-23)
-  mostActiveDay?: number;       // Day of week (1-7)
+  mostActiveDay?: number; // Day of week (1-7)
   ratingTrends: {
     period: string; // 'week', 'month', 'quarter'
     averageRating: number;
@@ -83,20 +83,20 @@ export interface IRatingPatterns {
  */
 export interface ITasteProfileDocument extends Document {
   userId: mongoose.Types.ObjectId;
-  
+
   // Core taste preferences
   preferredAttributes: IPreferredAttribute[];
   preferredFlavorProfiles: IPreferredFlavorProfile[];
   preferredCharacteristics: IPreferredCharacteristics;
-  
+
   // Rating patterns and behavior
   ratingPatterns: IRatingPatterns;
-  
+
   // Profile metadata
   totalRatings: number;
   lastRatingDate?: Date;
   profileConfidence: number; // 0-100: Overall confidence in the profile
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -114,7 +114,7 @@ const TasteProfileSchema: Schema = new Schema(
       required: [true, 'User ID is required'],
       unique: true,
     },
-    
+
     preferredAttributes: [
       {
         attribute: {
@@ -147,7 +147,7 @@ const TasteProfileSchema: Schema = new Schema(
         },
       },
     ],
-    
+
     preferredFlavorProfiles: [
       {
         flavorNote: {
@@ -173,7 +173,7 @@ const TasteProfileSchema: Schema = new Schema(
         },
       },
     ],
-    
+
     preferredCharacteristics: {
       roastLevels: [
         {
@@ -234,7 +234,7 @@ const TasteProfileSchema: Schema = new Schema(
         },
       ],
     },
-    
+
     ratingPatterns: {
       overallRatingDistribution: [
         {
@@ -299,18 +299,18 @@ const TasteProfileSchema: Schema = new Schema(
         },
       ],
     },
-    
+
     totalRatings: {
       type: Number,
       min: 0,
       required: true,
       default: 0,
     },
-    
+
     lastRatingDate: {
       type: Date,
     },
-    
+
     profileConfidence: {
       type: Number,
       min: 0,
@@ -318,7 +318,7 @@ const TasteProfileSchema: Schema = new Schema(
       required: true,
       default: 0,
     },
-    
+
     lastCalculated: {
       type: Date,
       required: true,
@@ -337,4 +337,4 @@ TasteProfileSchema.index({ profileConfidence: -1 });
 // Export the model
 const TasteProfile = mongoose.model<ITasteProfileDocument>('TasteProfile', TasteProfileSchema);
 
-export default TasteProfile; 
+export default TasteProfile;

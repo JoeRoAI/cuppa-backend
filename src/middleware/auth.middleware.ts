@@ -48,7 +48,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
       res.status(401).json({
         success: false,
         message: 'Not authorized to access this route',
-        error: 'No authentication token provided'
+        error: 'No authentication token provided',
       });
       return;
     }
@@ -66,7 +66,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
           res.status(401).json({
             success: false,
             message: 'User not found or invalid token',
-            error: 'Authentication failed'
+            error: 'Authentication failed',
           });
           return;
         }
@@ -88,7 +88,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
           res.status(401).json({
             success: false,
             message: 'Not authorized to access this route',
-            error: decoded ? 'Invalid token type' : 'Token verification failed'
+            error: decoded ? 'Invalid token type' : 'Token verification failed',
           });
           return;
         }
@@ -103,7 +103,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
           res.status(401).json({
             success: false,
             message: 'User not found or invalid token',
-            error: 'User associated with token not found'
+            error: 'User associated with token not found',
           });
           return;
         }
@@ -128,7 +128,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
       res.status(401).json({
         success: false,
         message: 'Not authorized to access this route',
-        error: decoded ? 'Invalid token type' : 'Token verification failed'
+        error: decoded ? 'Invalid token type' : 'Token verification failed',
       });
       return;
     }
@@ -143,7 +143,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
       res.status(401).json({
         success: false,
         message: 'User not found or invalid token',
-        error: 'User associated with token not found'
+        error: 'User associated with token not found',
       });
       return;
     }
@@ -157,7 +157,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
     res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',
-      error: error.message
+      error: error.message,
     });
     return;
   }
@@ -181,24 +181,24 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
 
   try {
     // Extract domain from origin header
-    const originDomain = new URL(origin as string).hostname;
-    
+    const originDomain = new URL(origin).hostname;
+
     // Compare with the host
     if (host !== originDomain && !originDomain.endsWith(`.${host}`)) {
       res.status(403).json({
         success: false,
         message: 'CSRF protection: Origin does not match host',
-        error: 'Cross-site request forbidden'
+        error: 'Cross-site request forbidden',
       });
       return;
     }
-    
+
     next();
   } catch (error) {
     res.status(403).json({
       success: false,
       message: 'Invalid origin header',
-      error: 'CSRF protection failure'
+      error: 'CSRF protection failure',
     });
     return;
   }
@@ -214,7 +214,7 @@ export const authorize = (...roles: string[]) => {
       res.status(401).json({
         success: false,
         message: 'Not authorized to access this route',
-        error: 'User not authenticated'
+        error: 'User not authenticated',
       });
       return;
     }
@@ -224,7 +224,7 @@ export const authorize = (...roles: string[]) => {
       res.status(403).json({
         success: false,
         message: `User role ${req.user.role} is not authorized to access this route`,
-        error: 'Insufficient permissions'
+        error: 'Insufficient permissions',
       });
       return;
     }
@@ -244,16 +244,16 @@ export const requireRole = (minimumRole: string) => {
       res.status(401).json({
         success: false,
         message: 'Not authorized to access this route',
-        error: 'User not authenticated'
+        error: 'User not authenticated',
       });
       return;
     }
 
     const roleHierarchy = {
-      'admin': 3,
-      'manager': 2,
-      'user': 1,
-      'guest': 0
+      admin: 3,
+      manager: 2,
+      user: 1,
+      guest: 0,
     };
 
     const userRoleLevel = roleHierarchy[req.user.role] || 0;
@@ -263,7 +263,7 @@ export const requireRole = (minimumRole: string) => {
       res.status(403).json({
         success: false,
         message: `User role ${req.user.role} does not have sufficient privileges`,
-        error: 'Insufficient permissions'
+        error: 'Insufficient permissions',
       });
       return;
     }

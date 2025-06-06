@@ -321,11 +321,11 @@ export const refreshToken = async (
 ): Promise<void> => {
   try {
     // Get refresh token from request body, header, or cookie
-    const refreshToken = 
-      req.body.refreshToken || 
-      (req.headers.authorization && req.headers.authorization.startsWith('Bearer') 
-        ? req.headers.authorization.split(' ')[1] 
-        : undefined) || 
+    const refreshToken =
+      req.body.refreshToken ||
+      (req.headers.authorization && req.headers.authorization.startsWith('Bearer')
+        ? req.headers.authorization.split(' ')[1]
+        : undefined) ||
       req.cookies.refreshToken;
 
     if (!refreshToken) {
@@ -383,25 +383,26 @@ export const refreshToken = async (
         // 1. Revoke all tokens for this user
         // 2. Force the user to login again
         // 3. Notify the user of the security breach
-        
+
         // Log security incident
         const tokenReuseDetected = JwtService.detectTokenReuse(
           storedToken.tokenId,
           mockUser._id,
-          true, 
+          true,
           ipAddress,
-          deviceInfo as string
+          deviceInfo
         );
-        
+
         if (tokenReuseDetected) {
           // Invalidate all refresh tokens for this user
-          mockUserRefreshTokens[mockUser._id] = mockUserRefreshTokens[mockUser._id].map(token => {
+          mockUserRefreshTokens[mockUser._id] = mockUserRefreshTokens[mockUser._id].map((token) => {
             return { ...token, isRevoked: true, revokedAt: new Date() };
           });
-          
+
           res.status(401).json({
             success: false,
-            message: 'Token reuse detected. All sessions have been terminated for security reasons.',
+            message:
+              'Token reuse detected. All sessions have been terminated for security reasons.',
           });
           return;
         }
@@ -427,13 +428,13 @@ export const refreshToken = async (
 
       // Generate new access token
       const newAccessToken = JwtService.generateAccessToken(mockUser);
-      
+
       // Rotate refresh token
       const newRefreshTokenObj = JwtService.rotateRefreshToken(
-        storedToken, 
-        mockUser, 
+        storedToken,
+        mockUser,
         ipAddress,
-        deviceInfo as string
+        deviceInfo
       );
 
       // Update stored tokens
@@ -492,19 +493,19 @@ export const refreshToken = async (
       const tokenReuseDetected = JwtService.detectTokenReuse(
         storedToken.tokenId,
         user._id.toString(),
-        true, 
+        true,
         ipAddress,
-        deviceInfo as string
+        deviceInfo
       );
-      
+
       if (tokenReuseDetected) {
         // Invalidate all refresh tokens for this user
-        user.refreshTokens = user.refreshTokens.map(token => {
+        user.refreshTokens = user.refreshTokens.map((token) => {
           return { ...token, isRevoked: true, revokedAt: new Date() };
         });
-        
+
         await user.save();
-        
+
         res.status(401).json({
           success: false,
           message: 'Token reuse detected. All sessions have been terminated for security reasons.',
@@ -533,13 +534,13 @@ export const refreshToken = async (
 
     // Generate new access token
     const newAccessToken = JwtService.generateAccessToken(user);
-    
+
     // Rotate refresh token
     const newRefreshTokenObj = JwtService.rotateRefreshToken(
-      storedToken, 
-      user, 
+      storedToken,
+      user,
       ipAddress,
-      deviceInfo as string
+      deviceInfo
     );
 
     // Update stored tokens
@@ -690,7 +691,7 @@ const sendTokenResponse = (
   const deviceInfo = res.req.headers['user-agent'] || 'unknown';
 
   // Generate tokens
-  const { accessToken, refreshToken } = JwtService.generateAuthTokens(user, ipAddress, deviceInfo as string);
+  const { accessToken, refreshToken } = JwtService.generateAuthTokens(user, ipAddress, deviceInfo);
 
   // Set refresh token in secure HTTP-only cookie
   res.cookie(
@@ -1041,10 +1042,7 @@ export const forgotPassword = async (
       const resetToken = crypto.randomBytes(32).toString('hex');
 
       // Hash the token for storage (so it's not stored in plain text)
-      const hashedToken = crypto
-        .createHash('sha256')
-        .update(resetToken)
-        .digest('hex');
+      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
       // Store hashed token in mock storage with expiration
       mockUser.resetPasswordToken = hashedToken;
@@ -1055,12 +1053,7 @@ export const forgotPassword = async (
 
       try {
         // Send email with token
-        await EmailService.sendPasswordResetEmail(
-          email,
-          mockUser.name,
-          resetToken,
-          resetUrl
-        );
+        await EmailService.sendPasswordResetEmail(email, mockUser.name, resetToken, resetUrl);
 
         res.status(200).json({
           success: true,
@@ -1095,10 +1088,7 @@ export const forgotPassword = async (
     const resetToken = crypto.randomBytes(32).toString('hex');
 
     // Hash the token for storage
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     // Set the token and expiration on the user document
     user.resetPasswordToken = hashedToken;
@@ -1110,12 +1100,7 @@ export const forgotPassword = async (
 
     try {
       // Send email with token
-      await EmailService.sendPasswordResetEmail(
-        email,
-        user.name,
-        resetToken,
-        resetUrl
-      );
+      await EmailService.sendPasswordResetEmail(email, user.name, resetToken, resetUrl);
 
       res.status(200).json({
         success: true,
@@ -1183,10 +1168,7 @@ export const resetPassword = async (
     }
 
     // Hash the token from the request to compare with the stored hashed token
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     // Check if using mock database
     if (usingMockDatabase) {
@@ -1217,7 +1199,7 @@ export const resetPassword = async (
 
       // Update password (in a real app we'd hash it)
       mockUser.password = password;
-      
+
       // Clear reset token fields
       mockUser.resetPasswordToken = undefined;
       mockUser.resetPasswordExpire = undefined;
@@ -1228,10 +1210,7 @@ export const resetPassword = async (
       );
 
       // Send notification email about password change
-      await EmailService.sendPasswordChangeNotificationEmail(
-        mockUser.email,
-        mockUser.name
-      );
+      await EmailService.sendPasswordChangeNotificationEmail(mockUser.email, mockUser.name);
 
       // Return success and new login token
       sendTokenResponse(mockUser, 200, res, req.ip || 'unknown');
@@ -1256,15 +1235,15 @@ export const resetPassword = async (
 
     // Update password
     user.password = password;
-    
+
     // Clear reset token fields
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
-    
+
     // Invalidate all active sessions for security
     // In a production app, you might want to keep the current session active
     user.refreshTokens = [];
-    
+
     await user.save();
 
     // Log successful password reset for security auditing
@@ -1273,10 +1252,7 @@ export const resetPassword = async (
     );
 
     // Send notification email about password change
-    await EmailService.sendPasswordChangeNotificationEmail(
-      user.email,
-      user.name
-    );
+    await EmailService.sendPasswordChangeNotificationEmail(user.email, user.name);
 
     // Return success and new login token
     sendTokenResponse(user, 200, res, req.ip || 'unknown');

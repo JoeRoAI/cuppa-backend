@@ -28,4 +28,4 @@ router.get('/filtered/:targetUserId', privacySettingsController.getFilteredUserD
 // Admin-only routes
 router.get('/user/:userId', privacySettingsController.getUserPrivacySettings);
 
-export default router; 
+export default router;

@@ -23,4 +23,4 @@ router.post('/multipass', protect, generateMultipassToken);
 // Manually set access token (admin only)
 router.post('/token', protect, authorize('admin'), setAccessToken);
 
-export default router; 
+export default router;

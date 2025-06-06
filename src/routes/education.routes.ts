@@ -31,4 +31,4 @@ router.get('/bookmarks', getUserBookmarks);
 router.get('/bookmarks/check/:guideId', checkBookmark);
 router.delete('/bookmarks/:guideId', removeBookmark);
 
-export default router; 
+export default router;

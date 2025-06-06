@@ -28,7 +28,7 @@ export const setupMockDatabase = () => {
 export const connectDB = async (): Promise<void> => {
   try {
     const mongoURI = config.MONGODB_URI;
-    
+
     console.log(`🔗 Attempting to connect to MongoDB...`);
     console.log(`   Environment: ${config.NODE_ENV}`);
     console.log(`   URI: ${mongoURI.replace(/\/\/.*@/, '//***:***@')}`); // Hide credentials
@@ -37,7 +37,7 @@ export const connectDB = async (): Promise<void> => {
     if (config.NODE_ENV === 'production' && mongoURI === 'mongodb://localhost:27017/cuppa') {
       throw new Error(
         'Production environment detected but no MongoDB URI configured. ' +
-        'Please set MONGODB_URI environment variable with your MongoDB Atlas connection string.'
+          'Please set MONGODB_URI environment variable with your MongoDB Atlas connection string.'
       );
     }
 
@@ -103,7 +103,9 @@ export const connectDB = async (): Promise<void> => {
     } else {
       // In production, we need a database connection
       console.error('💥 Production environment requires a valid MongoDB connection. Exiting...');
-      console.error('Please configure MONGODB_URI environment variable with your MongoDB Atlas connection string.');
+      console.error(
+        'Please configure MONGODB_URI environment variable with your MongoDB Atlas connection string.'
+      );
       process.exit(1);
     }
   }

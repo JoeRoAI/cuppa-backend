@@ -33,12 +33,7 @@ class ImageService {
     originalName: string,
     options: ImageProcessingOptions = {}
   ): Promise<ProcessedImage> {
-    const {
-      width = 800,
-      height = 600,
-      quality = 80,
-      format = 'jpeg'
-    } = options;
+    const { width = 800, height = 600, quality = 80, format = 'jpeg' } = options;
 
     // Validate image buffer first
     const isValid = await this.validateImage(buffer);
@@ -56,7 +51,7 @@ class ImageService {
         height,
         quality,
         format,
-        folder: 'cuppa/general'
+        folder: 'cuppa/general',
       });
 
       return {
@@ -65,7 +60,7 @@ class ImageService {
         secureUrl: result.secureUrl,
         size: result.bytes,
         width: result.width,
-        height: result.height
+        height: result.height,
       };
     } catch (error) {
       console.error('Error processing image:', error);
@@ -88,7 +83,7 @@ class ImageService {
       height: 400,
       quality: 85,
       format: 'jpeg',
-      folder: 'cuppa/profiles'
+      folder: 'cuppa/profiles',
     });
 
     return {
@@ -97,7 +92,7 @@ class ImageService {
       secureUrl: result.secureUrl,
       size: result.bytes,
       width: result.width,
-      height: result.height
+      height: result.height,
     };
   }
 
@@ -116,7 +111,7 @@ class ImageService {
       height: 600,
       quality: 80,
       format: 'jpeg',
-      folder: 'cuppa/reviews'
+      folder: 'cuppa/reviews',
     });
 
     return {
@@ -125,7 +120,7 @@ class ImageService {
       secureUrl: result.secureUrl,
       size: result.bytes,
       width: result.width,
-      height: result.height
+      height: result.height,
     };
   }
 
@@ -156,18 +151,13 @@ class ImageService {
    */
   private isValidPublicIdOrUrl(input: string): boolean {
     // Check for basic format and prevent path traversal
-    const suspiciousPatterns = [
-      /\.\./,
-      /\/\.\./,
-      /\0/,
-      /<script/i,
-      /javascript:/i,
-      /data:/i
-    ];
+    const suspiciousPatterns = [/\.\./, /\/\.\./, /\0/, /<script/i, /javascript:/i, /data:/i];
 
-    return !suspiciousPatterns.some(pattern => pattern.test(input)) && 
-           input.length > 0 && 
-           input.length < 500; // Reasonable length limit
+    return (
+      !suspiciousPatterns.some((pattern) => pattern.test(input)) &&
+      input.length > 0 &&
+      input.length < 500
+    ); // Reasonable length limit
   }
 
   /**
@@ -248,7 +238,7 @@ class ImageService {
       // Try to get image info without processing
       const sharp = require('sharp');
       const metadata = await sharp(buffer).metadata();
-      
+
       // Basic validation
       if (!metadata.width || !metadata.height) {
         return false;
@@ -275,9 +265,9 @@ class ImageService {
     if (!this.isValidPublicIdOrUrl(publicId)) {
       throw new Error('Invalid public ID for URL generation');
     }
-    
+
     return this.storageProvider.generateUrl(publicId, options);
   }
 }
 
-export default new ImageService(); 
+export default new ImageService();

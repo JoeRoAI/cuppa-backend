@@ -389,7 +389,7 @@ export const createAdminRestClient = async () => {
           trackRateLimits(params.path, response.headers);
         }
         return response;
-      }
+      },
     };
   } catch (error) {
     logger.error(
@@ -449,7 +449,7 @@ export const createAdminGraphQLClient = async () => {
           trackRateLimits(params.query || 'graphql', response.headers);
         }
         return response;
-      }
+      },
     };
   } catch (error) {
     logger.error(
@@ -789,5 +789,5 @@ export default {
   registerShopifyWebhooks,
   createRestClient: createAdminRestClient,
   createGraphQLClient: createAdminGraphQLClient,
-  isShopifyAvailable
+  isShopifyAvailable,
 };

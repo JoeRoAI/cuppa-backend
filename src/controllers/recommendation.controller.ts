@@ -19,17 +19,17 @@ import logger from '../utils/logger';
  */
 const getUserId = (req: Request): string | null => {
   if (!req.user) return null;
-  
+
   // Handle mock users (have id property)
   if ('id' in req.user && req.user.id) {
     return req.user.id.toString();
   }
-  
+
   // Handle real users (have _id property)
   if ('_id' in req.user && req.user._id) {
     return req.user._id.toString();
   }
-  
+
   return null;
 };
 
@@ -176,7 +176,7 @@ export const ingestUserInteractions = async (req: Request, res: Response): Promi
         ...interaction,
         userId: userId,
       };
-      
+
       const result = await DataIngestionService.ingestRealTimeInteraction(interactionData);
       results.push(result);
     }
@@ -184,9 +184,9 @@ export const ingestUserInteractions = async (req: Request, res: Response): Promi
     res.status(200).json({
       success: true,
       data: {
-        processed: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length,
-        results
+        processed: results.filter((r) => r.success).length,
+        failed: results.filter((r) => !r.success).length,
+        results,
       },
     });
   } catch (error) {
@@ -239,7 +239,7 @@ export const batchIngestInteractions = async (req: Request, res: Response): Prom
 export const getUserFeatures = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    
+
     // Check if user is requesting their own features or has admin access
     const requestingUserId = getUserId(req);
     if (userId !== requestingUserId) {
@@ -250,7 +250,9 @@ export const getUserFeatures = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const features = await FeatureEngineeringService.extractUserFeatures(new mongoose.Types.ObjectId(userId));
+    const features = await FeatureEngineeringService.extractUserFeatures(
+      new mongoose.Types.ObjectId(userId)
+    );
 
     res.status(200).json({
       success: true,
@@ -273,7 +275,7 @@ export const getUserFeatures = async (req: Request, res: Response): Promise<void
 export const refreshUserFeatures = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    
+
     // Check if user is requesting refresh of their own features
     const requestingUserId = getUserId(req);
     if (userId !== requestingUserId) {
@@ -285,7 +287,10 @@ export const refreshUserFeatures = async (req: Request, res: Response): Promise<
     }
 
     // Force refresh features (bypass cache)
-    const features = await FeatureEngineeringService.extractUserFeatures(new mongoose.Types.ObjectId(userId), true);
+    const features = await FeatureEngineeringService.extractUserFeatures(
+      new mongoose.Types.ObjectId(userId),
+      true
+    );
 
     res.status(200).json({
       success: true,
@@ -345,7 +350,7 @@ export const deployModel = async (req: Request, res: Response): Promise<void> =>
       version,
       algorithm,
       config: config || {},
-      replaceCurrentDeployment: true
+      replaceCurrentDeployment: true,
     });
 
     res.status(200).json({
@@ -371,7 +376,7 @@ export const getABTestResults = async (req: Request, res: Response): Promise<voi
     const { testId } = req.params;
 
     const test = ModelServingService.getABTest(testId);
-    
+
     if (!test) {
       res.status(404).json({
         success: false,

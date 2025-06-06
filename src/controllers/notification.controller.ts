@@ -46,8 +46,8 @@ class NotificationController {
       }
 
       // Build options with proper typing
-      const validSortBy = ['createdAt', 'priority', 'type'].includes(sortBy as string) 
-        ? (sortBy as 'createdAt' | 'priority' | 'type') 
+      const validSortBy = ['createdAt', 'priority', 'type'].includes(sortBy as string)
+        ? (sortBy as 'createdAt' | 'priority' | 'type')
         : 'createdAt';
 
       const options = {
@@ -63,7 +63,6 @@ class NotificationController {
         success: true,
         data: result,
       });
-
     } catch (error) {
       logger.error('Error getting notifications:', error);
       res.status(500).json({
@@ -94,7 +93,6 @@ class NotificationController {
         success: true,
         data: { count },
       });
-
     } catch (error) {
       logger.error('Error getting unread count:', error);
       res.status(500).json({
@@ -125,7 +123,6 @@ class NotificationController {
         success: true,
         data: stats,
       });
-
     } catch (error) {
       logger.error('Error getting notification stats:', error);
       res.status(500).json({
@@ -165,7 +162,6 @@ class NotificationController {
           message: 'Notification not found',
         });
       }
-
     } catch (error) {
       logger.error('Error marking notification as read:', error);
       res.status(500).json({
@@ -197,7 +193,6 @@ class NotificationController {
         message: `${count} notifications marked as read`,
         data: { count },
       });
-
     } catch (error) {
       logger.error('Error marking all notifications as read:', error);
       res.status(500).json({
@@ -237,7 +232,6 @@ class NotificationController {
           message: 'Notification not found',
         });
       }
-
     } catch (error) {
       logger.error('Error deleting notification:', error);
       res.status(500).json({
@@ -271,7 +265,11 @@ class NotificationController {
       }
 
       const userId = new mongoose.Types.ObjectId(req.user.id);
-      const { type = 'achievement', title = 'Test Notification', message = 'This is a test notification' } = req.body;
+      const {
+        type = 'achievement',
+        title = 'Test Notification',
+        message = 'This is a test notification',
+      } = req.body;
 
       const notification = await NotificationService.createNotification({
         userId,
@@ -286,7 +284,6 @@ class NotificationController {
         message: 'Test notification created',
         data: notification,
       });
-
     } catch (error) {
       logger.error('Error creating test notification:', error);
       res.status(500).json({
@@ -297,4 +294,4 @@ class NotificationController {
   }
 }
 
-export default new NotificationController(); 
+export default new NotificationController();

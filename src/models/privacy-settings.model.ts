@@ -2,14 +2,14 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPrivacySettings extends Document {
   userId: mongoose.Types.ObjectId;
-  
+
   // Profile visibility settings
   profileVisibility: 'public' | 'friends' | 'private';
   showEmail: boolean;
   showRealName: boolean;
   showProfileImage: boolean;
   showJoinDate: boolean;
-  
+
   // Activity visibility settings
   activityVisibility: 'public' | 'friends' | 'private';
   showCheckIns: boolean;
@@ -17,32 +17,32 @@ export interface IPrivacySettings extends Document {
   showReviews: boolean;
   showBookmarks: boolean;
   showTasteProfile: boolean;
-  
+
   // Social interaction settings
   allowFollowing: boolean;
   allowComments: boolean;
   allowLikes: boolean;
   allowMentions: boolean;
   allowDirectMessages: boolean;
-  
+
   // Discovery settings
   discoverableByEmail: boolean;
   discoverableByName: boolean;
   showInSuggestions: boolean;
   showInLeaderboards: boolean;
-  
+
   // Notification settings
   notifyOnFollow: boolean;
   notifyOnComment: boolean;
   notifyOnLike: boolean;
   notifyOnMention: boolean;
   notifyOnDirectMessage: boolean;
-  
+
   // Data sharing settings
   allowDataForRecommendations: boolean;
   allowAnalytics: boolean;
   allowThirdPartySharing: boolean;
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,7 +55,7 @@ const PrivacySettingsSchema = new Schema<IPrivacySettings>(
       required: true,
       unique: true,
     },
-    
+
     // Profile visibility settings
     profileVisibility: {
       type: String,
@@ -78,7 +78,7 @@ const PrivacySettingsSchema = new Schema<IPrivacySettings>(
       type: Boolean,
       default: true,
     },
-    
+
     // Activity visibility settings
     activityVisibility: {
       type: String,
@@ -105,7 +105,7 @@ const PrivacySettingsSchema = new Schema<IPrivacySettings>(
       type: Boolean,
       default: true,
     },
-    
+
     // Social interaction settings
     allowFollowing: {
       type: Boolean,
@@ -127,7 +127,7 @@ const PrivacySettingsSchema = new Schema<IPrivacySettings>(
       type: Boolean,
       default: true,
     },
-    
+
     // Discovery settings
     discoverableByEmail: {
       type: Boolean,
@@ -145,7 +145,7 @@ const PrivacySettingsSchema = new Schema<IPrivacySettings>(
       type: Boolean,
       default: true,
     },
-    
+
     // Notification settings
     notifyOnFollow: {
       type: Boolean,
@@ -167,7 +167,7 @@ const PrivacySettingsSchema = new Schema<IPrivacySettings>(
       type: Boolean,
       default: true,
     },
-    
+
     // Data sharing settings
     allowDataForRecommendations: {
       type: Boolean,
@@ -192,4 +192,4 @@ PrivacySettingsSchema.index({ userId: 1 });
 
 const PrivacySettings = mongoose.model<IPrivacySettings>('PrivacySettings', PrivacySettingsSchema);
 
-export default PrivacySettings; 
+export default PrivacySettings;

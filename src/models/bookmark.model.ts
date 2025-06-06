@@ -11,29 +11,32 @@ export interface IBookmark extends Document {
 }
 
 // Bookmark Schema
-const BookmarkSchema: Schema = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const BookmarkSchema: Schema = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    guide: {
+      type: Schema.Types.ObjectId,
+      ref: 'Guide',
+      required: true,
+    },
+    bookmarkedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    notes: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
   },
-  guide: {
-    type: Schema.Types.ObjectId,
-    ref: 'Guide',
-    required: true
-  },
-  bookmarkedAt: {
-    type: Date,
-    default: Date.now
-  },
-  notes: {
-    type: String,
-    trim: true,
-    maxlength: 500
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Compound index to ensure a user can only bookmark a guide once
 BookmarkSchema.index({ user: 1, guide: 1 }, { unique: true });
@@ -42,4 +45,4 @@ BookmarkSchema.index({ user: 1, guide: 1 }, { unique: true });
 BookmarkSchema.index({ user: 1, bookmarkedAt: -1 });
 BookmarkSchema.index({ guide: 1 });
 
-export const Bookmark = mongoose.model<IBookmark>('Bookmark', BookmarkSchema); 
+export const Bookmark = mongoose.model<IBookmark>('Bookmark', BookmarkSchema);

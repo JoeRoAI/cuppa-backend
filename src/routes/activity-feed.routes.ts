@@ -26,4 +26,4 @@ router.get('/stats/:userId', ActivityFeedController.getActivityStats);
 router.post('/activity', ActivityFeedController.createActivity);
 router.delete('/activity/:activityId', ActivityFeedController.deleteActivity);
 
-export default router; 
+export default router;

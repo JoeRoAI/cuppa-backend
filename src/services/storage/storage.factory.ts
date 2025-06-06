@@ -34,4 +34,4 @@ export class StorageFactory {
   static reset(): void {
     this.instance = null;
   }
-} 
+}

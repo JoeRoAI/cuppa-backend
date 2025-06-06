@@ -23,7 +23,7 @@ export class EmailService {
     if (!options.to || !options.subject || (!options.text && !options.html)) {
       throw new Error('Missing required email options');
     }
-    
+
     // In development, just log the email
     if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') {
       console.log('\n');
@@ -39,7 +39,7 @@ export class EmailService {
       console.log('===========================\n');
       return true;
     }
-    
+
     // In production, use a real email service
     // This is a placeholder for a real implementation
     try {
@@ -51,7 +51,7 @@ export class EmailService {
       //   text: options.text,
       //   html: options.html
       // });
-      
+
       console.log(`Email sent to ${options.to}`);
       return true;
     } catch (error) {
@@ -59,7 +59,7 @@ export class EmailService {
       return false;
     }
   }
-  
+
   /**
    * Send a password reset email
    * @param to Recipient email
@@ -75,7 +75,7 @@ export class EmailService {
     resetUrl: string
   ): Promise<boolean> {
     const subject = 'Password Reset - Cuppa';
-    
+
     const text = `
       Hi ${name},
       
@@ -92,7 +92,7 @@ export class EmailService {
       Best regards,
       The Cuppa Team
     `;
-    
+
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #5c3d2e;">Password Reset - Cuppa</h2>
@@ -111,7 +111,7 @@ export class EmailService {
         <p>Best regards,<br>The Cuppa Team</p>
       </div>
     `;
-    
+
     return this.sendEmail({ to, subject, text, html });
   }
 
@@ -121,12 +121,9 @@ export class EmailService {
    * @param name Recipient name
    * @returns Promise resolving to true if successful
    */
-  static async sendPasswordChangeNotificationEmail(
-    to: string,
-    name: string
-  ): Promise<boolean> {
+  static async sendPasswordChangeNotificationEmail(to: string, name: string): Promise<boolean> {
     const subject = 'Password Changed - Cuppa';
-    
+
     const text = `
       Hi ${name},
       
@@ -137,7 +134,7 @@ export class EmailService {
       Best regards,
       The Cuppa Team
     `;
-    
+
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #5c3d2e;">Password Changed - Cuppa</h2>
@@ -147,9 +144,9 @@ export class EmailService {
         <p>Best regards,<br>The Cuppa Team</p>
       </div>
     `;
-    
+
     return this.sendEmail({ to, subject, text, html });
   }
 }
 
-export default EmailService; 
+export default EmailService;

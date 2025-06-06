@@ -18,7 +18,7 @@ const verifyWebhook = (req: Request): boolean => {
   try {
     const hmacHeader = req.headers['x-shopify-hmac-sha256'] as string;
     const body = req.body;
-    
+
     if (!hmacHeader || !config.SHOPIFY_API_SECRET) {
       return false;
     }
@@ -30,10 +30,7 @@ const verifyWebhook = (req: Request): boolean => {
       .digest('base64');
 
     // Compare our hash to Shopify's hash
-    return crypto.timingSafeEqual(
-      Buffer.from(hash),
-      Buffer.from(hmacHeader)
-    );
+    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(hmacHeader));
   } catch (error) {
     logger.error('Error verifying webhook:', error);
     return false;
@@ -60,12 +57,12 @@ export const handleProductWebhook = async (
 
     // Get the webhook topic
     const topic = req.headers['x-shopify-topic'] as string;
-    
+
     // Process based on topic
     if (topic.includes('products/create') || topic.includes('products/update')) {
       // Extract the product data from the webhook payload
       const shopifyProduct = req.body;
-      
+
       // Transform to our expected format
       const transformedProduct = {
         id: `gid://shopify/Product/${shopifyProduct.id}`,
@@ -77,27 +74,27 @@ export const handleProductWebhook = async (
           title: variant.title,
           price: {
             amount: variant.price.toString(),
-            currencyCode: shopifyProduct.currency || 'USD'
+            currencyCode: shopifyProduct.currency || 'USD',
           },
-          available: variant.inventory_quantity > 0
+          available: variant.inventory_quantity > 0,
         })),
         images: shopifyProduct.images.map((image: any) => ({
-          url: image.src
-        }))
+          url: image.src,
+        })),
       };
-      
+
       // Sync the product to our database
       await productSyncService.syncProduct(transformedProduct);
-      
+
       logger.info(`Processed ${topic} webhook for product ${shopifyProduct.id}`);
       res.status(200).send('OK');
     } else if (topic.includes('products/delete')) {
       // Handle product deletion
       const shopifyId = req.body.id.toString();
-      
+
       // Delete from our database
       await productSyncService.deleteProductById(shopifyId);
-      
+
       logger.info(`Processed ${topic} webhook for product ${shopifyId}`);
       res.status(200).send('OK');
     } else {
@@ -106,7 +103,9 @@ export const handleProductWebhook = async (
       res.status(200).send('Ignored');
     }
   } catch (error) {
-    logger.error(`Error handling product webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    logger.error(
+      `Error handling product webhook: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
     // Always return 200 to Shopify to prevent retries
     res.status(200).send('Error processed');
   }
@@ -132,18 +131,15 @@ export const handleInventoryWebhook = async (
 
     // Get the webhook topic
     const topic = req.headers['x-shopify-topic'] as string;
-    
+
     if (topic.includes('inventory_levels/update')) {
       // Extract inventory data
       const inventoryData = req.body;
       const variantId = inventoryData.inventory_item_id;
-      
+
       // Update inventory for the variant
-      await productSyncService.updateProductInventory(
-        variantId,
-        inventoryData.available
-      );
-      
+      await productSyncService.updateProductInventory(variantId, inventoryData.available);
+
       logger.info(`Processed ${topic} webhook for variant ${variantId}`);
       res.status(200).send('OK');
     } else {
@@ -152,7 +148,9 @@ export const handleInventoryWebhook = async (
       res.status(200).send('Ignored');
     }
   } catch (error) {
-    logger.error(`Error handling inventory webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    logger.error(
+      `Error handling inventory webhook: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
     // Always return 200 to Shopify to prevent retries
     res.status(200).send('Error processed');
   }
@@ -173,46 +171,48 @@ export const registerWebhooks = async (
     const host = req.get('host') || config.API_HOST || 'localhost:5001';
     const protocol = req.protocol || 'http';
     const baseUrl = `${protocol}://${host}/api/shopify/webhook`;
-    
+
     // Define the webhooks to register
     const webhooks = [
       {
         topic: 'products/create',
         address: `${baseUrl}/products`,
-        format: 'json'
+        format: 'json',
       },
       {
         topic: 'products/update',
         address: `${baseUrl}/products`,
-        format: 'json'
+        format: 'json',
       },
       {
         topic: 'products/delete',
         address: `${baseUrl}/products`,
-        format: 'json'
+        format: 'json',
       },
       {
         topic: 'inventory_levels/update',
         address: `${baseUrl}/inventory`,
-        format: 'json'
-      }
+        format: 'json',
+      },
     ];
-    
+
     // Register webhooks with Shopify
     const shopifyService = await import('../services/shopify.service');
     const results = await shopifyService.registerShopifyWebhooks(webhooks);
-    
+
     res.status(200).json({
       success: true,
       message: 'Webhook registration completed',
-      results
+      results,
     });
   } catch (error) {
-    logger.error(`Error registering webhooks: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    logger.error(
+      `Error registering webhooks: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
     res.status(500).json({
       success: false,
       message: 'Error registering webhooks',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-}; 
+};

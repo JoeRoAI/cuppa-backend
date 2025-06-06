@@ -95,4 +95,4 @@ CheckInSchema.index({ userId: 1, createdAt: -1 });
 // We're using a sparse index to allow multiple check-ins to the same shop
 CheckInSchema.index({ userId: 1, shopId: 1, createdAt: -1 });
 
-export default mongoose.model<ICheckInDocument>('CheckIn', CheckInSchema); 
+export default mongoose.model<ICheckInDocument>('CheckIn', CheckInSchema);

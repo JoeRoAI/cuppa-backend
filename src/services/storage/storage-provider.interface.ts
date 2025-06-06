@@ -36,4 +36,4 @@ export interface StorageProvider {
    * Check if the provider is configured and ready
    */
   isConfigured(): boolean;
-} 
+}

@@ -34,4 +34,4 @@ router.get('/users/:userId/check-ins', getUserCheckIns as express.RequestHandler
 router.delete('/check-ins/:checkInId', protect, deleteCheckIn as express.RequestHandler);
 router.patch('/check-ins/:checkInId', protect, updateCheckIn as express.RequestHandler);
 
-export default router; 
+export default router;

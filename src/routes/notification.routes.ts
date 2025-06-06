@@ -49,4 +49,4 @@ router.delete('/:id', NotificationController.deleteNotification);
  */
 router.post('/test', NotificationController.createTestNotification);
 
-export default router; 
+export default router;

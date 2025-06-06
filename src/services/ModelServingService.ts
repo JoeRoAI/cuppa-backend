@@ -127,19 +127,19 @@ class ModelServingService extends EventEmitter {
 
     // Determine model version (A/B testing or default)
     const modelVersion = await this.selectModelVersion(context);
-    
+
     // Generate cache key
     const cacheKey = this.generateCacheKey(context.userId, options, modelVersion);
-    
+
     // Check cache first
     if (useCache && this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey)!;
       if (Date.now() - cached.timestamp.getTime() < cached.ttl) {
         cached.hits++;
         cached.lastAccessed = new Date();
-        
+
         this.emit('cacheHit', { userId: context.userId, cacheKey, modelVersion });
-        
+
         return {
           recommendations: cached.data,
           metadata: {
@@ -148,8 +148,8 @@ class ModelServingService extends EventEmitter {
             cached: true,
             processingTime: Date.now() - startTime,
             abTestGroup: context.abTestGroup,
-            requestId: context.requestId
-          }
+            requestId: context.requestId,
+          },
         };
       } else {
         // Remove expired cache entry
@@ -173,8 +173,8 @@ class ModelServingService extends EventEmitter {
         context: {
           source: 'model-serving',
           deviceType: context.deviceType,
-          location: context.location
-        }
+          location: context.location,
+        },
       }
     );
 
@@ -191,7 +191,7 @@ class ModelServingService extends EventEmitter {
       modelVersion,
       algorithm,
       count: recommendations.length,
-      processingTime: Date.now() - startTime
+      processingTime: Date.now() - startTime,
     });
 
     return {
@@ -202,8 +202,8 @@ class ModelServingService extends EventEmitter {
         cached: false,
         processingTime: Date.now() - startTime,
         abTestGroup: context.abTestGroup,
-        requestId: context.requestId
-      }
+        requestId: context.requestId,
+      },
     };
   }
 
@@ -225,7 +225,7 @@ class ModelServingService extends EventEmitter {
   }> {
     try {
       const modelId = `${modelConfig.name}_${modelConfig.version}_${Date.now()}`;
-      
+
       const newModel: ModelVersion = {
         id: modelId,
         name: modelConfig.name,
@@ -235,7 +235,7 @@ class ModelServingService extends EventEmitter {
         performance: {},
         status: 'testing',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Validate model configuration
@@ -244,7 +244,7 @@ class ModelServingService extends EventEmitter {
         return {
           success: false,
           modelId,
-          message: `Model validation failed: ${validationResult.errors.join(', ')}`
+          message: `Model validation failed: ${validationResult.errors.join(', ')}`,
         };
       }
 
@@ -270,15 +270,14 @@ class ModelServingService extends EventEmitter {
       return {
         success: true,
         modelId,
-        message: 'Model deployed successfully'
+        message: 'Model deployed successfully',
       };
-
     } catch (error) {
       logger.error('Error deploying model:', error);
       return {
         success: false,
         modelId: '',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -302,12 +301,15 @@ class ModelServingService extends EventEmitter {
   }> {
     try {
       // Validate traffic percentages sum to 100
-      const totalTraffic = testConfig.modelVersions.reduce((sum, mv) => sum + mv.trafficPercentage, 0);
+      const totalTraffic = testConfig.modelVersions.reduce(
+        (sum, mv) => sum + mv.trafficPercentage,
+        0
+      );
       if (Math.abs(totalTraffic - 100) > 0.01) {
         return {
           success: false,
           testId: '',
-          message: 'Traffic percentages must sum to 100%'
+          message: 'Traffic percentages must sum to 100%',
         };
       }
 
@@ -317,7 +319,7 @@ class ModelServingService extends EventEmitter {
           return {
             success: false,
             testId: '',
-            message: `Model version ${mv.modelId} not found`
+            message: `Model version ${mv.modelId} not found`,
           };
         }
       }
@@ -332,7 +334,7 @@ class ModelServingService extends EventEmitter {
         endDate: new Date(Date.now() + testConfig.duration * 24 * 60 * 60 * 1000),
         status: 'running',
         metrics: testConfig.metrics,
-        targetUsers: testConfig.targetUsers
+        targetUsers: testConfig.targetUsers,
       };
 
       this.abTests.set(testId, abTest);
@@ -344,15 +346,14 @@ class ModelServingService extends EventEmitter {
       return {
         success: true,
         testId,
-        message: 'A/B test created and started successfully'
+        message: 'A/B test created and started successfully',
       };
-
     } catch (error) {
       logger.error('Error creating A/B test:', error);
       return {
         success: false,
         testId: '',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -383,7 +384,7 @@ class ModelServingService extends EventEmitter {
     // Simple hash-based assignment for consistent user experience
     const userHash = this.hashUserId(userId.toString());
     const testPercentage = test.targetUsers?.percentage || 100;
-    return (userHash % 100) < testPercentage;
+    return userHash % 100 < testPercentage;
   }
 
   /**
@@ -393,7 +394,7 @@ class ModelServingService extends EventEmitter {
   private selectModelFromTest(userId: mongoose.Types.ObjectId, test: ABTestConfig): string {
     const userHash = this.hashUserId(userId.toString());
     const bucket = userHash % 100;
-    
+
     let cumulativePercentage = 0;
     for (const modelVersion of test.modelVersions) {
       cumulativePercentage += modelVersion.trafficPercentage;
@@ -401,7 +402,7 @@ class ModelServingService extends EventEmitter {
         return modelVersion.modelId;
       }
     }
-    
+
     // Fallback to first model
     return test.modelVersions[0].modelId;
   }
@@ -420,7 +421,7 @@ class ModelServingService extends EventEmitter {
       modelVersion,
       options.algorithm || 'hybrid',
       options.limit || 10,
-      (options.excludeCoffeeIds || []).sort().join(',')
+      (options.excludeCoffeeIds || []).sort().join(','),
     ];
     return `rec_${keyParts.join('_')}`;
   }
@@ -432,8 +433,9 @@ class ModelServingService extends EventEmitter {
   private cacheRecommendations(key: string, data: any, ttl: number): void {
     // Remove oldest entries if cache is full
     if (this.cache.size >= this.CACHE_MAX_SIZE) {
-      const oldestKey = Array.from(this.cache.entries())
-        .sort(([,a], [,b]) => a.lastAccessed.getTime() - b.lastAccessed.getTime())[0][0];
+      const oldestKey = Array.from(this.cache.entries()).sort(
+        ([, a], [, b]) => a.lastAccessed.getTime() - b.lastAccessed.getTime()
+      )[0][0];
       this.cache.delete(oldestKey);
     }
 
@@ -443,7 +445,7 @@ class ModelServingService extends EventEmitter {
       timestamp: new Date(),
       ttl,
       hits: 0,
-      lastAccessed: new Date()
+      lastAccessed: new Date(),
     });
   }
 
@@ -458,7 +460,7 @@ class ModelServingService extends EventEmitter {
     if (!userLimit || now > userLimit.resetTime) {
       this.rateLimitMap.set(userId, {
         count: 1,
-        resetTime: now + this.RATE_LIMIT_WINDOW
+        resetTime: now + this.RATE_LIMIT_WINDOW,
       });
       return true;
     }
@@ -479,7 +481,7 @@ class ModelServingService extends EventEmitter {
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
       const char = userId.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
@@ -499,14 +501,21 @@ class ModelServingService extends EventEmitter {
     if (!model.version) errors.push('Model version is required');
     if (!model.algorithm) errors.push('Model algorithm is required');
 
-    const validAlgorithms = ['collaborative', 'content-based', 'hybrid', 'popularity', 'discovery', 'social'];
+    const validAlgorithms = [
+      'collaborative',
+      'content-based',
+      'hybrid',
+      'popularity',
+      'discovery',
+      'social',
+    ];
     if (!validAlgorithms.includes(model.algorithm)) {
       errors.push(`Invalid algorithm: ${model.algorithm}`);
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -520,9 +529,9 @@ class ModelServingService extends EventEmitter {
       accuracy: 0.85,
       precision: 0.82,
       recall: 0.78,
-      f1Score: 0.80,
+      f1Score: 0.8,
       clickThroughRate: 0.15,
-      conversionRate: 0.05
+      conversionRate: 0.05,
     };
   }
 
@@ -544,7 +553,7 @@ class ModelServingService extends EventEmitter {
       recommendationCount,
       timestamp: context.timestamp,
       deviceType: context.deviceType,
-      location: context.location
+      location: context.location,
     });
   }
 
@@ -563,19 +572,19 @@ class ModelServingService extends EventEmitter {
           collaborative: 0.4,
           contentBased: 0.3,
           popularity: 0.2,
-          diversity: 0.1
-        }
+          diversity: 0.1,
+        },
       },
       performance: {
-        accuracy: 0.80,
+        accuracy: 0.8,
         precision: 0.75,
-        recall: 0.70,
-        f1Score: 0.72
+        recall: 0.7,
+        f1Score: 0.72,
       },
       status: 'deployed',
       deployedAt: new Date(),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.modelVersions.set(defaultModel.id, defaultModel);
@@ -588,14 +597,17 @@ class ModelServingService extends EventEmitter {
    */
   private setupPeriodicTasks(): void {
     // Clean up expired cache entries every 10 minutes
-    setInterval(() => {
-      const now = Date.now();
-      for (const [key, entry] of this.cache.entries()) {
-        if (now - entry.timestamp.getTime() > entry.ttl) {
-          this.cache.delete(key);
+    setInterval(
+      () => {
+        const now = Date.now();
+        for (const [key, entry] of this.cache.entries()) {
+          if (now - entry.timestamp.getTime() > entry.ttl) {
+            this.cache.delete(key);
+          }
         }
-      }
-    }, 10 * 60 * 1000);
+      },
+      10 * 60 * 1000
+    );
 
     // Clean up rate limit entries every minute
     setInterval(() => {
@@ -635,10 +647,11 @@ class ModelServingService extends EventEmitter {
 
     return {
       modelVersions: this.modelVersions.size,
-      activeABTests: Array.from(this.abTests.values()).filter(test => test.status === 'running').length,
+      activeABTests: Array.from(this.abTests.values()).filter((test) => test.status === 'running')
+        .length,
       cacheSize: this.cache.size,
       cacheHitRate,
-      currentModel: this.currentDeployedModel
+      currentModel: this.currentDeployedModel,
     };
   }
 
@@ -677,4 +690,4 @@ class ModelServingService extends EventEmitter {
   }
 }
 
-export default new ModelServingService(); 
+export default new ModelServingService();

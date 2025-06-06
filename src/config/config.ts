@@ -59,7 +59,11 @@ const defaultConfig: Config = {
 const config: Config = {
   NODE_ENV: process.env.NODE_ENV || defaultConfig.NODE_ENV,
   // For Render, use PORT from environment or default to 10000
-  PORT: parseInt(process.env.PORT || (process.env.NODE_ENV === 'production' ? '10000' : defaultConfig.PORT.toString()), 10),
+  PORT: parseInt(
+    process.env.PORT ||
+      (process.env.NODE_ENV === 'production' ? '10000' : defaultConfig.PORT.toString()),
+    10
+  ),
   MONGODB_URI: process.env.MONGODB_URI || defaultConfig.MONGODB_URI,
   JWT_SECRET: process.env.JWT_SECRET || defaultConfig.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || defaultConfig.JWT_EXPIRES_IN,

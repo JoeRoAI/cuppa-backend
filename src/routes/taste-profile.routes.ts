@@ -31,4 +31,4 @@ router.put('/update/config', protect, tasteProfileController.updateConfig);
 router.post('/update/process-queue', protect, tasteProfileController.processQueue);
 router.get('/update/history/:userId', protect, tasteProfileController.getUpdateHistory);
 
-export default router; 
+export default router;

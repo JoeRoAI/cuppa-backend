@@ -66,228 +66,253 @@ export interface IGuide extends Document {
 }
 
 // Guide Category Schema
-const GuideCategorySchema: Schema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 100
-  },
-  description: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 500
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  icon: {
-    type: String,
-    trim: true
-  },
-  order: {
-    type: Number,
-    default: 0
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
-
-// Guide Tag Schema
-const GuideTagSchema: Schema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 50
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  color: {
-    type: String,
-    trim: true,
-    match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
-
-// Guide Schema
-const GuideSchema: Schema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 200
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 1000
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  excerpt: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 300
-  },
-  featuredImage: {
-    type: String,
-    trim: true
-  },
-  images: [{
-    type: String,
-    trim: true
-  }],
-  category: {
-    type: Schema.Types.ObjectId,
-    ref: 'GuideCategory',
-    required: true
-  },
-  tags: [{
-    type: Schema.Types.ObjectId,
-    ref: 'GuideTag'
-  }],
-  author: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  difficulty: {
-    type: String,
-    enum: ['beginner', 'intermediate', 'advanced'],
-    default: 'beginner'
-  },
-  estimatedTime: {
-    type: Number,
-    min: 1,
-    max: 480 // 8 hours max
-  },
-  equipment: [{
-    type: String,
-    trim: true
-  }],
-  ingredients: [{
-    type: String,
-    trim: true
-  }],
-  steps: [{
-    stepNumber: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-    title: {
+const GuideCategorySchema: Schema = new Schema(
+  {
+    name: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 100
+      maxlength: 100,
     },
     description: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 500,
     },
-    image: {
+    slug: {
       type: String,
-      trim: true
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    duration: {
+    icon: {
+      type: String,
+      trim: true,
+    },
+    order: {
       type: Number,
-      min: 0
+      default: 0,
     },
-    tips: [{
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Guide Tag Schema
+const GuideTagSchema: Schema = new Schema(
+  {
+    name: {
       type: String,
-      trim: true
-    }]
-  }],
-  relatedGuides: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Guide'
-  }],
-  isPublished: {
-    type: Boolean,
-    default: false
+      required: true,
+      trim: true,
+      maxlength: 50,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    color: {
+      type: String,
+      trim: true,
+      match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  isFeatured: {
-    type: Boolean,
-    default: false
-  },
-  viewCount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  bookmarkCount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  rating: {
-    average: {
+  {
+    timestamps: true,
+  }
+);
+
+// Guide Schema
+const GuideSchema: Schema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 1000,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    excerpt: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 300,
+    },
+    featuredImage: {
+      type: String,
+      trim: true,
+    },
+    images: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: 'GuideCategory',
+      required: true,
+    },
+    tags: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'GuideTag',
+      },
+    ],
+    author: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    difficulty: {
+      type: String,
+      enum: ['beginner', 'intermediate', 'advanced'],
+      default: 'beginner',
+    },
+    estimatedTime: {
+      type: Number,
+      min: 1,
+      max: 480, // 8 hours max
+    },
+    equipment: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    ingredients: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    steps: [
+      {
+        stepNumber: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: 100,
+        },
+        description: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        image: {
+          type: String,
+          trim: true,
+        },
+        duration: {
+          type: Number,
+          min: 0,
+        },
+        tips: [
+          {
+            type: String,
+            trim: true,
+          },
+        ],
+      },
+    ],
+    relatedGuides: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Guide',
+      },
+    ],
+    isPublished: {
+      type: Boolean,
+      default: false,
+    },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    viewCount: {
       type: Number,
       default: 0,
       min: 0,
-      max: 5
     },
-    count: {
+    bookmarkCount: {
       type: Number,
       default: 0,
-      min: 0
-    }
-  },
-  seo: {
-    metaTitle: {
-      type: String,
-      trim: true,
-      maxlength: 60
+      min: 0,
     },
-    metaDescription: {
-      type: String,
-      trim: true,
-      maxlength: 160
+    rating: {
+      average: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5,
+      },
+      count: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
     },
-    keywords: [{
-      type: String,
-      trim: true
-    }]
+    seo: {
+      metaTitle: {
+        type: String,
+        trim: true,
+        maxlength: 60,
+      },
+      metaDescription: {
+        type: String,
+        trim: true,
+        maxlength: 160,
+      },
+      keywords: [
+        {
+          type: String,
+          trim: true,
+        },
+      ],
+    },
+    publishedAt: {
+      type: Date,
+    },
   },
-  publishedAt: {
-    type: Date
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Indexes for better performance
 GuideSchema.index({ slug: 1 });
@@ -306,22 +331,22 @@ GuideTagSchema.index({ slug: 1 });
 GuideTagSchema.index({ isActive: 1 });
 
 // Pre-save middleware to generate slug and set publishedAt
-GuideSchema.pre('save', function(this: IGuide, next) {
+GuideSchema.pre('save', function (this: IGuide, next) {
   if (this.isModified('title') && !this.slug) {
     this.slug = this.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
   }
-  
+
   if (this.isModified('isPublished') && this.isPublished && !this.publishedAt) {
     this.publishedAt = new Date();
   }
-  
+
   next();
 });
 
-GuideCategorySchema.pre('save', function(this: IGuideCategory, next) {
+GuideCategorySchema.pre('save', function (this: IGuideCategory, next) {
   if (this.isModified('name') && !this.slug) {
     this.slug = this.name
       .toLowerCase()
@@ -331,7 +356,7 @@ GuideCategorySchema.pre('save', function(this: IGuideCategory, next) {
   next();
 });
 
-GuideTagSchema.pre('save', function(this: IGuideTag, next) {
+GuideTagSchema.pre('save', function (this: IGuideTag, next) {
   if (this.isModified('name') && !this.slug) {
     this.slug = this.name
       .toLowerCase()
@@ -344,4 +369,4 @@ GuideTagSchema.pre('save', function(this: IGuideTag, next) {
 // Export models
 export const GuideCategory = mongoose.model<IGuideCategory>('GuideCategory', GuideCategorySchema);
 export const GuideTag = mongoose.model<IGuideTag>('GuideTag', GuideTagSchema);
-export const Guide = mongoose.model<IGuide>('Guide', GuideSchema); 
+export const Guide = mongoose.model<IGuide>('Guide', GuideSchema);

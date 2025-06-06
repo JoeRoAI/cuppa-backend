@@ -83,7 +83,7 @@ class MonitoringService extends EventEmitter {
   private readonly METRICS_RETENTION_DAYS = 30;
   private readonly DRIFT_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
   private readonly PERFORMANCE_WINDOW = 24 * 60 * 60 * 1000; // 24 hours
-  
+
   private metricsHistory = new Map<string, PerformanceMetrics[]>();
   private alertConfigs = new Map<string, AlertConfig>();
   private baselineMetrics = new Map<string, PerformanceMetrics>();
@@ -119,7 +119,7 @@ class MonitoringService extends EventEmitter {
     }
 
     const history = this.metricsHistory.get(key)!;
-    
+
     // Calculate aggregated metrics from recent history
     const recentMetrics = this.calculateAggregatedMetrics(history, metrics);
 
@@ -128,7 +128,7 @@ class MonitoringService extends EventEmitter {
       modelVersion: metrics.modelVersion,
       algorithm: metrics.algorithm,
       metrics: recentMetrics,
-      sampleSize: Math.min(history.length + 1, 1000) // Limit sample size
+      sampleSize: Math.min(history.length + 1, 1000), // Limit sample size
     };
 
     // Add to history
@@ -146,7 +146,7 @@ class MonitoringService extends EventEmitter {
     logger.debug(`Performance metrics recorded for ${key}`, {
       responseTime: metrics.responseTime,
       ctr: recentMetrics.clickThroughRate,
-      conversionRate: recentMetrics.conversionRate
+      conversionRate: recentMetrics.conversionRate,
     });
   }
 
@@ -173,8 +173,8 @@ class MonitoringService extends EventEmitter {
           baseline: null,
           current: null,
           threshold: 0.1,
-          detectionMethod: 'insufficient_data'
-        }
+          detectionMethod: 'insufficient_data',
+        },
       };
     }
 
@@ -216,15 +216,15 @@ class MonitoringService extends EventEmitter {
       affectedFeatures: [
         ...(performanceDrift.affectedMetrics || []),
         ...(dataDrift.affectedFeatures || []),
-        ...(conceptDrift.affectedMetrics || [])
+        ...(conceptDrift.affectedMetrics || []),
       ],
       recommendation,
       details: {
         baseline: baseline.metrics,
         current: currentAvg,
         threshold: driftThreshold,
-        detectionMethod: 'statistical_comparison'
-      }
+        detectionMethod: 'statistical_comparison',
+      },
     };
 
     // Emit drift detection event
@@ -233,7 +233,7 @@ class MonitoringService extends EventEmitter {
       logger.warn(`Model drift detected for ${key}`, {
         driftScore: maxDriftScore,
         driftType,
-        recommendation
+        recommendation,
       });
     }
 
@@ -250,13 +250,13 @@ class MonitoringService extends EventEmitter {
 
     // Check recommendation engine health
     services.recommendationEngine = await this.checkServiceHealth('recommendationEngine');
-    
+
     // Check data ingestion health
     services.dataIngestion = await this.checkServiceHealth('dataIngestion');
-    
+
     // Check feature engineering health
     services.featureEngineering = await this.checkServiceHealth('featureEngineering');
-    
+
     // Check model serving health
     services.modelServing = await this.checkServiceHealth('modelServing');
 
@@ -264,9 +264,9 @@ class MonitoringService extends EventEmitter {
     services.database = await this.checkDatabaseHealth();
 
     // Determine overall system status
-    const serviceStatuses = Object.values(services).map(s => s.status);
+    const serviceStatuses = Object.values(services).map((s) => s.status);
     let overallStatus: SystemHealth['status'] = 'healthy';
-    
+
     if (serviceStatuses.includes('critical')) {
       overallStatus = 'critical';
     } else if (serviceStatuses.includes('degraded')) {
@@ -280,7 +280,7 @@ class MonitoringService extends EventEmitter {
       status: overallStatus,
       timestamp,
       services,
-      alerts
+      alerts,
     };
   }
 
@@ -307,11 +307,11 @@ class MonitoringService extends EventEmitter {
       modelVersion,
       algorithm,
       metrics: averageMetrics,
-      sampleSize: recentMetrics.length
+      sampleSize: recentMetrics.length,
     };
 
     this.baselineMetrics.set(key, baseline);
-    
+
     this.emit('baselineSet', { modelVersion, algorithm, baseline });
     logger.info(`Baseline set for ${key}`, averageMetrics);
   }
@@ -326,20 +326,30 @@ class MonitoringService extends EventEmitter {
   ): PerformanceMetrics['metrics'] {
     // Get recent history (last 100 requests)
     const recentHistory = history.slice(-100);
-    
+
     // Calculate running averages
     const totalRequests = recentHistory.length + 1;
-    const interactions = recentHistory.filter(m => m.metrics.clickThroughRate > 0).length + (currentRequest.userInteracted ? 1 : 0);
-    const conversions = recentHistory.filter(m => m.metrics.conversionRate > 0).length + (currentRequest.userConverted ? 1 : 0);
-    const errors = recentHistory.filter(m => m.metrics.errorRate > 0).length + (currentRequest.errorOccurred ? 1 : 0);
+    const interactions =
+      recentHistory.filter((m) => m.metrics.clickThroughRate > 0).length +
+      (currentRequest.userInteracted ? 1 : 0);
+    const conversions =
+      recentHistory.filter((m) => m.metrics.conversionRate > 0).length +
+      (currentRequest.userConverted ? 1 : 0);
+    const errors =
+      recentHistory.filter((m) => m.metrics.errorRate > 0).length +
+      (currentRequest.errorOccurred ? 1 : 0);
 
-    const avgResponseTime = recentHistory.length > 0
-      ? (recentHistory.reduce((sum, m) => sum + m.metrics.responseTime, 0) + currentRequest.responseTime) / totalRequests
-      : currentRequest.responseTime;
+    const avgResponseTime =
+      recentHistory.length > 0
+        ? (recentHistory.reduce((sum, m) => sum + m.metrics.responseTime, 0) +
+            currentRequest.responseTime) /
+          totalRequests
+        : currentRequest.responseTime;
 
-    const avgRating = recentHistory.length > 0
-      ? recentHistory.reduce((sum, m) => sum + m.metrics.averageRating, 0) / recentHistory.length
-      : currentRequest.userRating || 0;
+    const avgRating =
+      recentHistory.length > 0
+        ? recentHistory.reduce((sum, m) => sum + m.metrics.averageRating, 0) / recentHistory.length
+        : currentRequest.userRating || 0;
 
     return {
       clickThroughRate: interactions / totalRequests,
@@ -349,7 +359,7 @@ class MonitoringService extends EventEmitter {
       noveltyScore: 0.6, // Would need actual novelty calculation
       responseTime: avgResponseTime,
       errorRate: errors / totalRequests,
-      userEngagement: interactions / totalRequests
+      userEngagement: interactions / totalRequests,
     };
   }
 
@@ -367,29 +377,32 @@ class MonitoringService extends EventEmitter {
         noveltyScore: 0,
         responseTime: 0,
         errorRate: 0,
-        userEngagement: 0
+        userEngagement: 0,
       };
     }
 
-    const sum = metrics.reduce((acc, m) => ({
-      clickThroughRate: acc.clickThroughRate + m.metrics.clickThroughRate,
-      conversionRate: acc.conversionRate + m.metrics.conversionRate,
-      averageRating: acc.averageRating + m.metrics.averageRating,
-      diversityScore: acc.diversityScore + m.metrics.diversityScore,
-      noveltyScore: acc.noveltyScore + m.metrics.noveltyScore,
-      responseTime: acc.responseTime + m.metrics.responseTime,
-      errorRate: acc.errorRate + m.metrics.errorRate,
-      userEngagement: acc.userEngagement + m.metrics.userEngagement
-    }), {
-      clickThroughRate: 0,
-      conversionRate: 0,
-      averageRating: 0,
-      diversityScore: 0,
-      noveltyScore: 0,
-      responseTime: 0,
-      errorRate: 0,
-      userEngagement: 0
-    });
+    const sum = metrics.reduce(
+      (acc, m) => ({
+        clickThroughRate: acc.clickThroughRate + m.metrics.clickThroughRate,
+        conversionRate: acc.conversionRate + m.metrics.conversionRate,
+        averageRating: acc.averageRating + m.metrics.averageRating,
+        diversityScore: acc.diversityScore + m.metrics.diversityScore,
+        noveltyScore: acc.noveltyScore + m.metrics.noveltyScore,
+        responseTime: acc.responseTime + m.metrics.responseTime,
+        errorRate: acc.errorRate + m.metrics.errorRate,
+        userEngagement: acc.userEngagement + m.metrics.userEngagement,
+      }),
+      {
+        clickThroughRate: 0,
+        conversionRate: 0,
+        averageRating: 0,
+        diversityScore: 0,
+        noveltyScore: 0,
+        responseTime: 0,
+        errorRate: 0,
+        userEngagement: 0,
+      }
+    );
 
     const count = metrics.length;
     return {
@@ -400,7 +413,7 @@ class MonitoringService extends EventEmitter {
       noveltyScore: sum.noveltyScore / count,
       responseTime: sum.responseTime / count,
       errorRate: sum.errorRate / count,
-      userEngagement: sum.userEngagement / count
+      userEngagement: sum.userEngagement / count,
     };
   }
 
@@ -417,7 +430,7 @@ class MonitoringService extends EventEmitter {
       conversionRate: 0.1,
       averageRating: 0.2,
       responseTime: 0.3,
-      errorRate: 0.05
+      errorRate: 0.05,
     };
 
     const affectedMetrics: string[] = [];
@@ -426,7 +439,7 @@ class MonitoringService extends EventEmitter {
     for (const [metric, threshold] of Object.entries(thresholds)) {
       const baselineValue = baseline[metric as keyof typeof baseline];
       const currentValue = current[metric as keyof typeof current];
-      
+
       if (baselineValue > 0) {
         const drift = Math.abs(currentValue - baselineValue) / baselineValue;
         if (drift > threshold) {
@@ -465,7 +478,7 @@ class MonitoringService extends EventEmitter {
     for (const metric of behaviorMetrics) {
       const baselineValue = baseline[metric as keyof typeof baseline];
       const currentValue = current[metric as keyof typeof current];
-      
+
       if (baselineValue > 0) {
         const drift = Math.abs(currentValue - baselineValue) / baselineValue;
         if (drift > 0.15) {
@@ -484,25 +497,25 @@ class MonitoringService extends EventEmitter {
    */
   private async checkServiceHealth(serviceName: string): Promise<SystemHealth['services'][string]> {
     const startTime = Date.now();
-    
+
     try {
       // Simulate health check - in real implementation, would ping actual services
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
-      
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 10));
+
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: responseTime > 1000 ? 'degraded' : 'healthy',
         responseTime,
         errorRate: 0,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     } catch (error) {
       return {
         status: 'critical',
         responseTime: Date.now() - startTime,
         errorRate: 1,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -513,7 +526,7 @@ class MonitoringService extends EventEmitter {
    */
   private async checkDatabaseHealth(): Promise<SystemHealth['services'][string]> {
     const startTime = Date.now();
-    
+
     try {
       // Simple database ping
       if (mongoose.connection.db) {
@@ -521,21 +534,21 @@ class MonitoringService extends EventEmitter {
       } else {
         throw new Error('Database connection not established');
       }
-      
+
       const responseTime = Date.now() - startTime;
-      
+
       return {
         status: responseTime > 500 ? 'degraded' : 'healthy',
         responseTime,
         errorRate: 0,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     } catch (error) {
       return {
         status: 'critical',
         responseTime: Date.now() - startTime,
         errorRate: 1,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -547,16 +560,18 @@ class MonitoringService extends EventEmitter {
   private checkAlerts(metrics: PerformanceMetrics): void {
     for (const alert of this.alertConfigs.values()) {
       if (!alert.enabled) continue;
-      
+
       // Check cooldown
-      if (alert.lastTriggered && 
-          Date.now() - alert.lastTriggered.getTime() < alert.cooldown * 60 * 1000) {
+      if (
+        alert.lastTriggered &&
+        Date.now() - alert.lastTriggered.getTime() < alert.cooldown * 60 * 1000
+      ) {
         continue;
       }
 
       const metricValue = metrics.metrics[alert.condition.metric as keyof typeof metrics.metrics];
       const threshold = alert.condition.threshold;
-      
+
       let triggered = false;
       switch (alert.condition.operator) {
         case '>':
@@ -588,7 +603,7 @@ class MonitoringService extends EventEmitter {
    */
   private triggerAlert(alert: AlertConfig, currentValue: number): void {
     alert.lastTriggered = new Date();
-    
+
     const alertData = {
       id: alert.id,
       name: alert.name,
@@ -596,11 +611,11 @@ class MonitoringService extends EventEmitter {
       message: `${alert.name}: ${alert.condition.metric} is ${currentValue} (threshold: ${alert.condition.threshold})`,
       timestamp: new Date(),
       currentValue,
-      threshold: alert.condition.threshold
+      threshold: alert.condition.threshold,
     };
 
     this.emit('alertTriggered', alertData);
-    
+
     logger.warn(`Alert triggered: ${alert.name}`, alertData);
   }
 
@@ -611,14 +626,14 @@ class MonitoringService extends EventEmitter {
   private getActiveAlerts(): SystemHealth['alerts'] {
     // Return recent alerts (last 24 hours)
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
     return Array.from(this.alertConfigs.values())
-      .filter(alert => alert.lastTriggered && alert.lastTriggered > cutoff)
-      .map(alert => ({
+      .filter((alert) => alert.lastTriggered && alert.lastTriggered > cutoff)
+      .map((alert) => ({
         id: alert.id,
         severity: alert.severity,
         message: alert.name,
-        timestamp: alert.lastTriggered!
+        timestamp: alert.lastTriggered!,
       }));
   }
 
@@ -636,7 +651,7 @@ class MonitoringService extends EventEmitter {
         severity: 'high',
         enabled: true,
         recipients: ['admin@cuppa.com'],
-        cooldown: 30
+        cooldown: 30,
       },
       {
         id: 'low_ctr',
@@ -646,7 +661,7 @@ class MonitoringService extends EventEmitter {
         severity: 'medium',
         enabled: true,
         recipients: ['admin@cuppa.com'],
-        cooldown: 60
+        cooldown: 60,
       },
       {
         id: 'high_response_time',
@@ -656,11 +671,11 @@ class MonitoringService extends EventEmitter {
         severity: 'medium',
         enabled: true,
         recipients: ['admin@cuppa.com'],
-        cooldown: 15
-      }
+        cooldown: 15,
+      },
     ];
 
-    defaultAlerts.forEach(alert => {
+    defaultAlerts.forEach((alert) => {
       this.alertConfigs.set(alert.id, alert);
     });
   }
@@ -683,9 +698,12 @@ class MonitoringService extends EventEmitter {
     }, this.DRIFT_CHECK_INTERVAL);
 
     // Cleanup old metrics daily
-    setInterval(() => {
-      this.cleanupOldMetrics();
-    }, 24 * 60 * 60 * 1000);
+    setInterval(
+      () => {
+        this.cleanupOldMetrics();
+      },
+      24 * 60 * 60 * 1000
+    );
 
     logger.info('Monitoring service initialized with periodic tasks');
   }
@@ -699,18 +717,18 @@ class MonitoringService extends EventEmitter {
 
     if (specificHistory) {
       // Clean specific history array
-      const index = specificHistory.findIndex(m => m.timestamp > cutoff);
+      const index = specificHistory.findIndex((m) => m.timestamp > cutoff);
       if (index > 0) {
         specificHistory.splice(0, index);
       }
     } else {
       // Clean all histories
       for (const [key, history] of this.metricsHistory.entries()) {
-        const index = history.findIndex(m => m.timestamp > cutoff);
+        const index = history.findIndex((m) => m.timestamp > cutoff);
         if (index > 0) {
           history.splice(0, index);
         }
-        
+
         // Remove empty histories
         if (history.length === 0) {
           this.metricsHistory.delete(key);
@@ -730,17 +748,19 @@ class MonitoringService extends EventEmitter {
     driftDetectionEnabled: boolean;
     lastDriftCheck: Date | null;
   } {
-    const totalMetrics = Array.from(this.metricsHistory.values())
-      .reduce((sum, history) => sum + history.length, 0);
+    const totalMetrics = Array.from(this.metricsHistory.values()).reduce(
+      (sum, history) => sum + history.length,
+      0
+    );
 
     return {
       metricsCollected: totalMetrics,
       alertsConfigured: this.alertConfigs.size,
       baselinesSet: this.baselineMetrics.size,
       driftDetectionEnabled: this.driftDetectionEnabled,
-      lastDriftCheck: new Date() // Simplified
+      lastDriftCheck: new Date(), // Simplified
     };
   }
 }
 
-export default new MonitoringService(); 
+export default new MonitoringService();

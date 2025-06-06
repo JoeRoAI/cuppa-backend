@@ -12,12 +12,21 @@ import {
   updateRating,
   deleteRating,
 } from '../controllers/rating.controller';
-import { afterRatingCreated, afterRatingUpdated, afterRatingDeleted } from '../middleware/taste-profile.middleware';
+import {
+  afterRatingCreated,
+  afterRatingUpdated,
+  afterRatingDeleted,
+} from '../middleware/taste-profile.middleware';
 
 const router = express.Router();
 
 // Coffee rating routes with taste profile middleware
-router.post('/coffee/:coffeeId/rate', protect, rateCoffee as express.RequestHandler, afterRatingCreated);
+router.post(
+  '/coffee/:coffeeId/rate',
+  protect,
+  rateCoffee as express.RequestHandler,
+  afterRatingCreated
+);
 router.get('/coffee/:coffeeId/ratings', getCoffeeRatings as express.RequestHandler);
 
 // User rating routes
@@ -33,7 +42,17 @@ router.get('/profile/ratings', protect, ((req: Request, res: Response) => {
 }) as express.RequestHandler);
 
 // Rating management routes with taste profile middleware
-router.put('/ratings/:ratingId', protect, updateRating as express.RequestHandler, afterRatingUpdated);
-router.delete('/ratings/:ratingId', protect, deleteRating as express.RequestHandler, afterRatingDeleted);
+router.put(
+  '/ratings/:ratingId',
+  protect,
+  updateRating as express.RequestHandler,
+  afterRatingUpdated
+);
+router.delete(
+  '/ratings/:ratingId',
+  protect,
+  deleteRating as express.RequestHandler,
+  afterRatingDeleted
+);
 
-export default router; 
+export default router;

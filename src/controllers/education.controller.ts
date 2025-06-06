@@ -1,5 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { Guide, GuideCategory, GuideTag, IGuide, IGuideCategory, IGuideTag } from '../models/guide.model';
+import {
+  Guide,
+  GuideCategory,
+  GuideTag,
+  IGuide,
+  IGuideCategory,
+  IGuideTag,
+} from '../models/guide.model';
 import { Bookmark, IBookmark } from '../models/bookmark.model';
 import { IUser } from '../models/user.model';
 
@@ -47,15 +54,9 @@ export const getCategories = async (
  * @route   GET /api/education/tags
  * @access  Public
  */
-export const getTags = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getTags = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const tags = await GuideTag.find({ isActive: true })
-      .sort({ name: 1 })
-      .select('-__v');
+    const tags = await GuideTag.find({ isActive: true }).sort({ name: 1 }).select('-__v');
 
     res.status(200).json({
       success: true,
@@ -76,11 +77,7 @@ export const getTags = async (
  * @route   GET /api/education/guides
  * @access  Public
  */
-export const getGuides = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getGuides = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const {
       page = 1,
@@ -90,7 +87,7 @@ export const getGuides = async (
       difficulty,
       search,
       featured,
-      sort = '-publishedAt'
+      sort = '-publishedAt',
     } = req.query;
 
     // Build query
@@ -117,7 +114,7 @@ export const getGuides = async (
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
-        { excerpt: { $regex: search, $options: 'i' } }
+        { excerpt: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -161,11 +158,7 @@ export const getGuides = async (
  * @route   GET /api/education/guides/:slug
  * @access  Public
  */
-export const getGuide = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getGuide = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { slug } = req.params;
 
@@ -420,8 +413,8 @@ export const getUserBookmarks = async (
         select: 'title slug excerpt featuredImage difficulty estimatedTime category tags',
         populate: [
           { path: 'category', select: 'name slug icon' },
-          { path: 'tags', select: 'name slug color' }
-        ]
+          { path: 'tags', select: 'name slug color' },
+        ],
       })
       .sort('-bookmarkedAt')
       .skip(skip)
@@ -484,4 +477,4 @@ export const checkBookmark = async (
       message: 'Error checking bookmark',
     });
   }
-}; 
+};

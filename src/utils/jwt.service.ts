@@ -233,7 +233,7 @@ export class JwtService {
 
     return authHeader.split(' ')[1];
   }
-  
+
   /**
    * Detect token reuse which might indicate a security breach
    * @param tokenId The token ID to check
@@ -259,13 +259,15 @@ export class JwtService {
         ipAddress,
         deviceInfo,
       });
-      
-      console.warn(`Token reuse detected! Token ID: ${tokenId}, User ID: ${userId}, IP: ${ipAddress}`);
+
+      console.warn(
+        `Token reuse detected! Token ID: ${tokenId}, User ID: ${userId}, IP: ${ipAddress}`
+      );
       return true;
     }
     return false;
   }
-  
+
   /**
    * Get token reuse events for security monitoring
    * @returns Array of token reuse events
@@ -273,14 +275,14 @@ export class JwtService {
   static getTokenReuseEvents() {
     return tokenReuseEvents;
   }
-  
+
   /**
    * Clear token reuse events (for testing or maintenance)
    */
   static clearTokenReuseEvents() {
     tokenReuseEvents.length = 0;
   }
-  
+
   /**
    * Get cookie options for storing refresh tokens securely
    * @param expires The expiration date

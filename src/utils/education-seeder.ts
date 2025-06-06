@@ -81,7 +81,8 @@ Pour over brewing is all about precision and timing. The key is to maintain cons
 - Bloom the coffee for 30 seconds
 - Pour in slow, circular motions
     `,
-    excerpt: 'Master the art of pour over coffee with this comprehensive step-by-step guide covering equipment, technique, and timing.',
+    excerpt:
+      'Master the art of pour over coffee with this comprehensive step-by-step guide covering equipment, technique, and timing.',
     featuredImage: '/images/guides/pour-over-featured.jpg',
     images: ['/images/guides/pour-over-1.jpg', '/images/guides/pour-over-2.jpg'],
     category: categoryIds['brewing-methods'],
@@ -89,44 +90,56 @@ Pour over brewing is all about precision and timing. The key is to maintain cons
     author: authorId,
     difficulty: 'beginner',
     estimatedTime: 15,
-    equipment: ['Pour over dripper', 'Paper filters', 'Gooseneck kettle', 'Coffee grinder', 'Digital scale'],
+    equipment: [
+      'Pour over dripper',
+      'Paper filters',
+      'Gooseneck kettle',
+      'Coffee grinder',
+      'Digital scale',
+    ],
     ingredients: ['30g fresh coffee beans', '480ml filtered water'],
     steps: [
       {
         stepNumber: 1,
         title: 'Heat Water and Prepare Equipment',
-        description: 'Heat water to 200°F (93°C). Place filter in dripper and rinse with hot water.',
+        description:
+          'Heat water to 200°F (93°C). Place filter in dripper and rinse with hot water.',
         duration: 3,
-        tips: ['Rinsing the filter removes papery taste', 'Preheating the dripper maintains temperature']
+        tips: [
+          'Rinsing the filter removes papery taste',
+          'Preheating the dripper maintains temperature',
+        ],
       },
       {
         stepNumber: 2,
         title: 'Grind Coffee',
         description: 'Grind 30g of coffee to medium consistency, similar to kosher salt.',
         duration: 1,
-        tips: ['Grind just before brewing for best flavor', 'Consistent grind size is crucial']
+        tips: ['Grind just before brewing for best flavor', 'Consistent grind size is crucial'],
       },
       {
         stepNumber: 3,
         title: 'Add Coffee and Bloom',
-        description: 'Add ground coffee to filter. Pour 60ml water in circular motion, wait 30 seconds.',
+        description:
+          'Add ground coffee to filter. Pour 60ml water in circular motion, wait 30 seconds.',
         duration: 1,
-        tips: ['Start timer when you begin pouring', 'Coffee should puff up during bloom']
+        tips: ['Start timer when you begin pouring', 'Coffee should puff up during bloom'],
       },
       {
         stepNumber: 4,
         title: 'Continue Pouring',
-        description: 'Pour remaining water in slow, steady circles, keeping water level consistent.',
+        description:
+          'Pour remaining water in slow, steady circles, keeping water level consistent.',
         duration: 3,
-        tips: ['Pour from center outward', 'Maintain steady flow rate']
+        tips: ['Pour from center outward', 'Maintain steady flow rate'],
       },
       {
         stepNumber: 5,
         title: 'Finish and Serve',
         description: 'Total brew time should be 4-6 minutes. Remove dripper and enjoy.',
         duration: 1,
-        tips: ['Taste and adjust grind size for next brew', 'Clean equipment immediately']
-      }
+        tips: ['Taste and adjust grind size for next brew', 'Clean equipment immediately'],
+      },
     ],
     isPublished: true,
     isFeatured: true,
@@ -135,9 +148,10 @@ Pour over brewing is all about precision and timing. The key is to maintain cons
     rating: { average: 4.7, count: 156 },
     seo: {
       metaTitle: 'Perfect Pour Over Coffee Guide - Step by Step Tutorial',
-      metaDescription: 'Learn to make perfect pour over coffee with our detailed guide. Includes equipment list, step-by-step instructions, and pro tips.',
-      keywords: ['pour over coffee', 'coffee brewing', 'coffee guide', 'V60', 'Chemex']
-    }
+      metaDescription:
+        'Learn to make perfect pour over coffee with our detailed guide. Includes equipment list, step-by-step instructions, and pro tips.',
+      keywords: ['pour over coffee', 'coffee brewing', 'coffee guide', 'V60', 'Chemex'],
+    },
   },
   {
     title: 'French Press Brewing Mastery',
@@ -164,7 +178,8 @@ French press brewing allows coffee grounds to steep directly in hot water, creat
 
 The metal mesh filter allows oils and fine particles through, creating the characteristic body and mouthfeel of French press coffee.
     `,
-    excerpt: 'Discover the secrets to brewing rich, full-bodied coffee with a French press using proper technique and timing.',
+    excerpt:
+      'Discover the secrets to brewing rich, full-bodied coffee with a French press using proper technique and timing.',
     featuredImage: '/images/guides/french-press-featured.jpg',
     category: categoryIds['brewing-methods'],
     tags: [tagIds['beginner'], tagIds['french-press']],
@@ -179,42 +194,42 @@ The metal mesh filter allows oils and fine particles through, creating the chara
         title: 'Preheat French Press',
         description: 'Rinse French press with hot water to preheat.',
         duration: 1,
-        tips: ['Preheating maintains brewing temperature']
+        tips: ['Preheating maintains brewing temperature'],
       },
       {
         stepNumber: 2,
         title: 'Add Coffee',
         description: 'Add coarsely ground coffee to the press.',
         duration: 1,
-        tips: ['Use coarse grind to prevent over-extraction']
+        tips: ['Use coarse grind to prevent over-extraction'],
       },
       {
         stepNumber: 3,
         title: 'Add Water and Stir',
         description: 'Pour hot water (200°F) over coffee, stir gently.',
         duration: 1,
-        tips: ['Ensure all grounds are saturated']
+        tips: ['Ensure all grounds are saturated'],
       },
       {
         stepNumber: 4,
         title: 'Steep',
-        description: 'Place lid on press (don\'t plunge yet), steep for 4 minutes.',
+        description: "Place lid on press (don't plunge yet), steep for 4 minutes.",
         duration: 4,
-        tips: ['Consistent timing is key to flavor']
+        tips: ['Consistent timing is key to flavor'],
       },
       {
         stepNumber: 5,
         title: 'Plunge and Serve',
         description: 'Slowly press plunger down, serve immediately.',
         duration: 1,
-        tips: ['Press slowly to avoid agitation', 'Serve immediately to prevent over-extraction']
-      }
+        tips: ['Press slowly to avoid agitation', 'Serve immediately to prevent over-extraction'],
+      },
     ],
     isPublished: true,
     isFeatured: false,
     viewCount: 890,
     bookmarkCount: 67,
-    rating: { average: 4.5, count: 123 }
+    rating: { average: 4.5, count: 123 },
   },
   {
     title: 'Understanding Coffee Grind Sizes',
@@ -266,7 +281,8 @@ The size of your coffee grounds determines how quickly water can extract flavors
 - Best for: Turkish coffee
 - Extraction time: Immediate
     `,
-    excerpt: 'Master the fundamentals of coffee grind sizes and how they affect extraction and flavor in different brewing methods.',
+    excerpt:
+      'Master the fundamentals of coffee grind sizes and how they affect extraction and flavor in different brewing methods.',
     featuredImage: '/images/guides/grind-sizes-featured.jpg',
     category: categoryIds['coffee-science'],
     tags: [tagIds['beginner'], tagIds['grind-size']],
@@ -279,38 +295,38 @@ The size of your coffee grounds determines how quickly water can extract flavors
       {
         stepNumber: 1,
         title: 'Identify Your Brewing Method',
-        description: 'Determine which brewing method you\'ll be using.',
+        description: "Determine which brewing method you'll be using.",
         duration: 1,
-        tips: ['Different methods require different grind sizes']
+        tips: ['Different methods require different grind sizes'],
       },
       {
         stepNumber: 2,
         title: 'Select Appropriate Grind Size',
         description: 'Choose the grind size that matches your brewing method.',
         duration: 1,
-        tips: ['Refer to the grind size chart above']
+        tips: ['Refer to the grind size chart above'],
       },
       {
         stepNumber: 3,
         title: 'Grind Coffee',
         description: 'Grind your coffee beans to the selected size.',
         duration: 1,
-        tips: ['Grind just before brewing', 'Use a burr grinder for consistency']
+        tips: ['Grind just before brewing', 'Use a burr grinder for consistency'],
       },
       {
         stepNumber: 4,
         title: 'Test and Adjust',
         description: 'Brew and taste, then adjust grind size if needed.',
         duration: 5,
-        tips: ['If bitter, try coarser', 'If sour, try finer']
-      }
+        tips: ['If bitter, try coarser', 'If sour, try finer'],
+      },
     ],
     isPublished: true,
     isFeatured: true,
     viewCount: 2100,
     bookmarkCount: 145,
-    rating: { average: 4.8, count: 234 }
-  }
+    rating: { average: 4.8, count: 234 },
+  },
 ];
 
 export const seedEducationData = async (authorId: string) => {
@@ -325,14 +341,14 @@ export const seedEducationData = async (authorId: string) => {
     // Create categories
     const categories = await GuideCategory.insertMany(sampleCategories);
     const categoryMap: { [key: string]: any } = {};
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       categoryMap[cat.slug] = cat._id;
     });
 
     // Create tags
     const tags = await GuideTag.insertMany(sampleTags);
     const tagMap: { [key: string]: any } = {};
-    tags.forEach(tag => {
+    tags.forEach((tag) => {
       tagMap[tag.slug] = tag._id;
     });
 
@@ -354,4 +370,4 @@ export const seedEducationData = async (authorId: string) => {
     console.error('❌ Error seeding education data:', error);
     throw error;
   }
-}; 
+};

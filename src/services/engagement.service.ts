@@ -26,49 +26,49 @@ class EngagementService {
       const existingLike = await Like.findOne({
         userId: new mongoose.Types.ObjectId(userId),
         targetId: new mongoose.Types.ObjectId(targetId),
-        targetType
+        targetType,
       });
-      
+
       if (existingLike) {
         // Toggle like status
         existingLike.isActive = !existingLike.isActive;
         await existingLike.save();
-        
+
         // Record activity only if it's a new like (not an unlike)
         if (existingLike.isActive) {
           await this.recordLikeActivity(userId, targetId, targetType);
         }
-        
+
         // Get updated count
         const count = await this.getLikeCount(targetId, targetType);
-        
+
         // Update cached like count for comments
         if (targetType === 'Comment') {
           await this.updateCommentLikeCount(targetId, count);
         }
-        
+
         return { liked: existingLike.isActive, count };
       } else {
         // Create new like
         const newLike = new Like({
           userId: new mongoose.Types.ObjectId(userId),
           targetId: new mongoose.Types.ObjectId(targetId),
-          targetType
+          targetType,
         });
-        
+
         await newLike.save();
-        
+
         // Record activity
         await this.recordLikeActivity(userId, targetId, targetType);
-        
+
         // Get updated count
         const count = await this.getLikeCount(targetId, targetType);
-        
+
         // Update cached like count for comments
         if (targetType === 'Comment') {
           await this.updateCommentLikeCount(targetId, count);
         }
-        
+
         return { liked: true, count };
       }
     } catch (error) {
@@ -76,73 +76,65 @@ class EngagementService {
       throw error;
     }
   }
-  
+
   /**
    * Gets the like count for a specific content
    */
   async getLikeCount(targetId: string, targetType: string): Promise<number> {
     const cacheKey = `like_count_${targetType}_${targetId}`;
     const cachedCount = engagementCache.get(cacheKey);
-    
+
     if (cachedCount !== undefined) {
       return cachedCount as number;
     }
-    
+
     try {
       const count = await Like.countDocuments({
         targetId: new mongoose.Types.ObjectId(targetId),
         targetType,
-        isActive: true
+        isActive: true,
       });
-      
+
       // Cache the result
       engagementCache.set(cacheKey, count);
-      
+
       return count;
     } catch (error) {
       console.error('Error getting like count:', error);
       throw error;
     }
   }
-  
+
   /**
    * Updates the cached like count for a comment
    */
   private async updateCommentLikeCount(commentId: string, count: number): Promise<void> {
     try {
-      await Comment.findByIdAndUpdate(
-        commentId,
-        { likeCount: count },
-        { new: true }
-      );
+      await Comment.findByIdAndUpdate(commentId, { likeCount: count }, { new: true });
     } catch (error) {
       console.error('Error updating comment like count:', error);
     }
   }
-  
+
   /**
    * Checks if a user has liked a specific content
    */
-  async hasUserLiked(
-    userId: string,
-    targetId: string,
-    targetType: string
-  ): Promise<boolean> {
+  async hasUserLiked(userId: string, targetId: string, targetType: string): Promise<boolean> {
     try {
       const like = await Like.findOne({
         userId: new mongoose.Types.ObjectId(userId),
         targetId: new mongoose.Types.ObjectId(targetId),
         targetType,
-        isActive: true
+        isActive: true,
       });
-      
+
       return !!like;
     } catch (error) {
       console.error('Error checking if user liked content:', error);
       throw error;
     }
   }
-  
+
   /**
    * Records a like activity in the activity feed
    */
@@ -153,25 +145,21 @@ class EngagementService {
   ): Promise<void> {
     try {
       // Get target user ID based on target type
-      let metadata: Record<string, any> = { targetType };
-      
+      const metadata: Record<string, any> = { targetType };
+
       // Record activity
-      await ActivityFeedService.recordActivity(
-        userId,
-        'like',
-        {
-          targetId,
-          targetType,
-          content: '',
-          metadata,
-          visibility: 'public'
-        }
-      );
+      await ActivityFeedService.recordActivity(userId, 'like', {
+        targetId,
+        targetType,
+        content: '',
+        metadata,
+        visibility: 'public',
+      });
     } catch (error) {
       console.error('Error recording like activity:', error);
     }
   }
-  
+
   /**
    * Creates a new comment
    */
@@ -190,24 +178,24 @@ class EngagementService {
         targetId: new mongoose.Types.ObjectId(targetId),
         targetType,
         parentId: parentId ? new mongoose.Types.ObjectId(parentId) : undefined,
-        status: 'approved' // Default to approved, can be changed based on moderation needs
+        status: 'approved', // Default to approved, can be changed based on moderation needs
       });
-      
+
       await comment.save();
-      
+
       // Record activity
       await this.recordCommentActivity(userId, comment._id.toString(), targetId, targetType);
-      
+
       // Clear cache for comment lists
       this.invalidateCommentCache(targetId, targetType);
-      
+
       return comment;
     } catch (error) {
       console.error('Error creating comment:', error);
       throw error;
     }
   }
-  
+
   /**
    * Updates an existing comment
    */
@@ -219,34 +207,34 @@ class EngagementService {
     try {
       // Find comment and check ownership
       const comment = await Comment.findById(commentId);
-      
+
       if (!comment) {
         throw new Error('Comment not found');
       }
-      
+
       if (comment.userId.toString() !== userId) {
         throw new Error('Unauthorized to update this comment');
       }
-      
+
       if (comment.isDeleted) {
         throw new Error('Cannot update deleted comment');
       }
-      
+
       // Update comment
       comment.content = content;
       comment.isEdited = true;
       await comment.save();
-      
+
       // Clear cache
       this.invalidateCommentCache(comment.targetId.toString(), comment.targetType);
-      
+
       return comment;
     } catch (error) {
       console.error('Error updating comment:', error);
       throw error;
     }
   }
-  
+
   /**
    * Soft deletes a comment
    */
@@ -258,30 +246,30 @@ class EngagementService {
     try {
       // Find comment
       const comment = await Comment.findById(commentId);
-      
+
       if (!comment) {
         throw new Error('Comment not found');
       }
-      
+
       // Check permissions (allow user who created the comment or admins)
       if (!isAdmin && comment.userId.toString() !== userId) {
         throw new Error('Unauthorized to delete this comment');
       }
-      
+
       // Soft delete
       comment.isDeleted = true;
       await comment.save();
-      
+
       // Clear cache
       this.invalidateCommentCache(comment.targetId.toString(), comment.targetType);
-      
+
       return true;
     } catch (error) {
       console.error('Error deleting comment:', error);
       throw error;
     }
   }
-  
+
   /**
    * Gets comments for a specific content
    */
@@ -299,19 +287,14 @@ class EngagementService {
     totalCount: number;
     hasMore: boolean;
   }> {
-    const { 
-      page = 1, 
-      limit = 20, 
-      parentId = null,
-      sort = 'newest'
-    } = options;
-    
+    const { page = 1, limit = 20, parentId = null, sort = 'newest' } = options;
+
     const skip = (page - 1) * limit;
-    
+
     // Create cache key
     const cacheKey = `comments_${targetType}_${targetId}_${page}_${limit}_${parentId || 'root'}_${sort}`;
     const cachedComments = engagementCache.get(cacheKey);
-    
+
     if (cachedComments) {
       return cachedComments as {
         comments: IComment[];
@@ -319,26 +302,26 @@ class EngagementService {
         hasMore: boolean;
       };
     }
-    
+
     try {
       // Build query
       const query: any = {
         targetId: new mongoose.Types.ObjectId(targetId),
         targetType,
         isDeleted: false,
-        status: 'approved'
+        status: 'approved',
       };
-      
+
       // Filter by parent (null for root comments, specific ID for replies)
       if (parentId === null) {
         query.parentId = { $exists: false };
       } else if (parentId) {
         query.parentId = new mongoose.Types.ObjectId(parentId);
       }
-      
+
       // Count total for pagination
       const totalCount = await Comment.countDocuments(query);
-      
+
       // Determine sort order
       let sortOptions: any = {};
       switch (sort) {
@@ -352,7 +335,7 @@ class EngagementService {
         default:
           sortOptions = { createdAt: -1 };
       }
-      
+
       // Get comments
       const comments = await Comment.find(query)
         .sort(sortOptions)
@@ -360,51 +343,51 @@ class EngagementService {
         .limit(limit)
         .populate('userId', 'name socialProfile.avatar')
         .populate('parentId');
-      
+
       const result = {
         comments,
         totalCount,
-        hasMore: totalCount > skip + limit
+        hasMore: totalCount > skip + limit,
       };
-      
+
       // Cache result
       engagementCache.set(cacheKey, result);
-      
+
       return result;
     } catch (error) {
       console.error('Error getting comments:', error);
       throw error;
     }
   }
-  
+
   /**
    * Gets reply count for a comment
    */
   async getReplyCount(commentId: string): Promise<number> {
     const cacheKey = `reply_count_${commentId}`;
     const cachedCount = engagementCache.get(cacheKey);
-    
+
     if (cachedCount !== undefined) {
       return cachedCount as number;
     }
-    
+
     try {
       const count = await Comment.countDocuments({
         parentId: new mongoose.Types.ObjectId(commentId),
         isDeleted: false,
-        status: 'approved'
+        status: 'approved',
       });
-      
+
       // Cache the result
       engagementCache.set(cacheKey, count);
-      
+
       return count;
     } catch (error) {
       console.error('Error getting reply count:', error);
       throw error;
     }
   }
-  
+
   /**
    * Records a comment activity in the activity feed
    */
@@ -416,37 +399,31 @@ class EngagementService {
   ): Promise<void> {
     try {
       // Record activity
-      await ActivityFeedService.recordActivity(
-        userId,
-        'comment',
-        {
-          targetId,
-          targetType,
-          content: '',
-          metadata: { commentId },
-          visibility: 'public'
-        }
-      );
+      await ActivityFeedService.recordActivity(userId, 'comment', {
+        targetId,
+        targetType,
+        content: '',
+        metadata: { commentId },
+        visibility: 'public',
+      });
     } catch (error) {
       console.error('Error recording comment activity:', error);
     }
   }
-  
+
   /**
    * Invalidates comment cache for a target
    */
   private invalidateCommentCache(targetId: string, targetType: string): void {
     // Clear all cached comment lists for this target
     const keys = engagementCache.keys();
-    const targetKeys = keys.filter(key => 
-      key.startsWith(`comments_${targetType}_${targetId}_`)
-    );
-    
-    targetKeys.forEach(key => {
+    const targetKeys = keys.filter((key) => key.startsWith(`comments_${targetType}_${targetId}_`));
+
+    targetKeys.forEach((key) => {
       engagementCache.del(key);
     });
   }
-  
+
   /**
    * Moderates a comment (admin function)
    */
@@ -457,18 +434,18 @@ class EngagementService {
   ): Promise<IComment | null> {
     try {
       const comment = await Comment.findById(commentId);
-      
+
       if (!comment) {
         throw new Error('Comment not found');
       }
-      
+
       // Update status
       comment.status = status;
       await comment.save();
-      
+
       // Clear cache
       this.invalidateCommentCache(comment.targetId.toString(), comment.targetType);
-      
+
       return comment;
     } catch (error) {
       console.error('Error moderating comment:', error);
@@ -477,4 +454,4 @@ class EngagementService {
   }
 }
 
-export default new EngagementService(); 
+export default new EngagementService();

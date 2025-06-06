@@ -49,7 +49,7 @@ class PerformanceMonitor {
     const duration = Date.now() - startTime;
     this.recordMetric(metricName, duration, metadata);
     this.startTimes.delete(metricName);
-    
+
     return duration;
   }
 
@@ -112,7 +112,7 @@ class PerformanceMonitor {
     let filteredMetrics = metrics;
     if (timeWindowMs) {
       const cutoffTime = new Date(Date.now() - timeWindowMs);
-      filteredMetrics = metrics.filter(m => m.timestamp >= cutoffTime);
+      filteredMetrics = metrics.filter((m) => m.timestamp >= cutoffTime);
     }
 
     if (filteredMetrics.length === 0) {
@@ -126,13 +126,15 @@ class PerformanceMonitor {
   /**
    * Get performance percentiles
    */
-  getPerformancePercentiles(metricName: string): { p50: number; p90: number; p95: number; p99: number } | null {
+  getPerformancePercentiles(
+    metricName: string
+  ): { p50: number; p90: number; p95: number; p99: number } | null {
     const metrics = this.metrics.get(metricName);
     if (!metrics || metrics.length === 0) {
       return null;
     }
 
-    const durations = metrics.map(m => m.duration).sort((a, b) => a - b);
+    const durations = metrics.map((m) => m.duration).sort((a, b) => a - b);
     const length = durations.length;
 
     return {
@@ -150,17 +152,17 @@ class PerformanceMonitor {
     const beforeMetrics = this.metrics.get(`${component}_before`) || [];
     const afterMetrics = this.metrics.get(`${component}_after`) || [];
 
-    const beforeAvg = beforeMetrics.length > 0 
-      ? beforeMetrics.reduce((sum, m) => sum + m.duration, 0) / beforeMetrics.length 
-      : 0;
+    const beforeAvg =
+      beforeMetrics.length > 0
+        ? beforeMetrics.reduce((sum, m) => sum + m.duration, 0) / beforeMetrics.length
+        : 0;
 
-    const afterAvg = afterMetrics.length > 0 
-      ? afterMetrics.reduce((sum, m) => sum + m.duration, 0) / afterMetrics.length 
-      : 0;
+    const afterAvg =
+      afterMetrics.length > 0
+        ? afterMetrics.reduce((sum, m) => sum + m.duration, 0) / afterMetrics.length
+        : 0;
 
-    const improvementPercentage = beforeAvg > 0 
-      ? ((beforeAvg - afterAvg) / beforeAvg) * 100 
-      : 0;
+    const improvementPercentage = beforeAvg > 0 ? ((beforeAvg - afterAvg) / beforeAvg) * 100 : 0;
 
     const recommendations = this.generateRecommendations(component, beforeAvg, afterAvg);
 
@@ -176,15 +178,23 @@ class PerformanceMonitor {
   /**
    * Generate performance recommendations
    */
-  private generateRecommendations(component: string, beforeAvg: number, afterAvg: number): string[] {
+  private generateRecommendations(
+    component: string,
+    beforeAvg: number,
+    afterAvg: number
+  ): string[] {
     const recommendations: string[] = [];
 
     if (afterAvg > 1000) {
-      recommendations.push(`${component} still takes over 1 second on average. Consider further optimization.`);
+      recommendations.push(
+        `${component} still takes over 1 second on average. Consider further optimization.`
+      );
     }
 
     if (beforeAvg > 0 && afterAvg > beforeAvg * 0.8) {
-      recommendations.push(`${component} optimization showed minimal improvement. Review implementation.`);
+      recommendations.push(
+        `${component} optimization showed minimal improvement. Review implementation.`
+      );
     }
 
     if (afterAvg < 200) {
@@ -195,15 +205,21 @@ class PerformanceMonitor {
     switch (component) {
       case 'taste_profile_aggregation':
         if (afterAvg > 500) {
-          recommendations.push('Consider implementing more aggressive caching for aggregation queries.');
+          recommendations.push(
+            'Consider implementing more aggressive caching for aggregation queries.'
+          );
           recommendations.push('Review database indexes for aggregation pipeline optimization.');
         }
         break;
 
       case 'similarity_calculation':
         if (afterAvg > 2000) {
-          recommendations.push('Implement approximate nearest neighbor algorithms for large user bases.');
-          recommendations.push('Consider vectorization and batch processing for similarity calculations.');
+          recommendations.push(
+            'Implement approximate nearest neighbor algorithms for large user bases.'
+          );
+          recommendations.push(
+            'Consider vectorization and batch processing for similarity calculations.'
+          );
         }
         break;
 
@@ -321,7 +337,11 @@ class PerformanceMonitor {
 export const performanceMonitor = new PerformanceMonitor();
 
 // Convenience functions for common operations
-export const trackTasteProfileGeneration = (userId: string, duration: number, ratingCount: number) => {
+export const trackTasteProfileGeneration = (
+  userId: string,
+  duration: number,
+  ratingCount: number
+) => {
   performanceMonitor.recordMetric('taste_profile_generation', duration, {
     userId,
     ratingCount,
@@ -341,7 +361,11 @@ export const trackChartRendering = (chartType: string, duration: number, dataPoi
   });
 };
 
-export const trackAggregationQuery = (duration: number, pipelineStages: number, resultCount: number) => {
+export const trackAggregationQuery = (
+  duration: number,
+  pipelineStages: number,
+  resultCount: number
+) => {
   performanceMonitor.recordMetric('aggregation_query', duration, {
     pipelineStages,
     resultCount,
@@ -370,4 +394,4 @@ export function performanceTrack(metricName: string) {
   };
 }
 
-export default PerformanceMonitor; 
+export default PerformanceMonitor;

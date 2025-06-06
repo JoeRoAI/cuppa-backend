@@ -29,7 +29,7 @@ const getUserId = (user: any): string | undefined => {
 export const afterRatingCreated = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = getUserId(req.user);
-    
+
     if (!userId) {
       logger.warn('No user found in request for taste profile update');
       return next();
@@ -42,9 +42,9 @@ export const afterRatingCreated = async (req: Request, res: Response, next: Next
           userId,
           'rating_added',
           req.body?.ratingId || req.params?.id,
-          { 
+          {
             source: 'rating_created',
-            ratingData: req.body 
+            ratingData: req.body,
           }
         );
         logger.debug(`Taste profile update triggered for user ${userId} after rating creation`);
@@ -66,7 +66,7 @@ export const afterRatingCreated = async (req: Request, res: Response, next: Next
 export const afterRatingUpdated = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = getUserId(req.user);
-    
+
     if (!userId) {
       logger.warn('No user found in request for taste profile update');
       return next();
@@ -79,9 +79,9 @@ export const afterRatingUpdated = async (req: Request, res: Response, next: Next
           userId,
           'rating_updated',
           req.params?.id || req.params?.ratingId,
-          { 
+          {
             source: 'rating_updated',
-            ratingData: req.body 
+            ratingData: req.body,
           }
         );
         logger.debug(`Taste profile update triggered for user ${userId} after rating update`);
@@ -103,7 +103,7 @@ export const afterRatingUpdated = async (req: Request, res: Response, next: Next
 export const afterRatingDeleted = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = getUserId(req.user);
-    
+
     if (!userId) {
       logger.warn('No user found in request for taste profile update');
       return next();
@@ -116,8 +116,8 @@ export const afterRatingDeleted = async (req: Request, res: Response, next: Next
           userId,
           'rating_deleted',
           req.params?.id || req.params?.ratingId,
-          { 
-            source: 'rating_deleted'
+          {
+            source: 'rating_deleted',
           }
         );
         logger.debug(`Taste profile update triggered for user ${userId} after rating deletion`);
@@ -139,11 +139,11 @@ export const afterRatingDeleted = async (req: Request, res: Response, next: Next
 export const attachRatingData = (ratingData: any) => {
   return (req: TasteProfileRequest, res: Response, next: NextFunction) => {
     const userId = getUserId(req.user);
-    
+
     req.rating = {
       id: ratingData.id || ratingData._id?.toString(),
       userId: ratingData.userId?.toString() || userId,
-      ...ratingData
+      ...ratingData,
     };
     next();
   };
@@ -164,16 +164,16 @@ export const afterBulkRatingOperation = async (req: Request, res: Response, next
     setImmediate(async () => {
       try {
         const updatePromises = userIds.map((userId: string) =>
-          TasteProfileUpdateService.triggerUpdate(
-            userId,
-            'manual',
-            undefined,
-            { source: 'bulk_operation', operation }
-          )
+          TasteProfileUpdateService.triggerUpdate(userId, 'manual', undefined, {
+            source: 'bulk_operation',
+            operation,
+          })
         );
 
         await Promise.allSettled(updatePromises);
-        logger.info(`Triggered taste profile updates for ${userIds.length} users after bulk operation`);
+        logger.info(
+          `Triggered taste profile updates for ${userIds.length} users after bulk operation`
+        );
       } catch (error) {
         logger.error(`Error triggering profile updates after bulk operation: ${error}`);
       }
@@ -192,15 +192,15 @@ export const afterBulkRatingOperation = async (req: Request, res: Response, next
 export const checkProfileUpdateNeeded = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = getUserId(req.user);
-    
+
     if (!userId) {
       return next();
     }
-    
+
     // Check if user has a recent profile
     const queueStatus = TasteProfileUpdateService.getQueueStatus();
-    const isQueued = queueStatus.queueDetails.some(q => q.userId === userId);
-    
+    const isQueued = queueStatus.queueDetails.some((q) => q.userId === userId);
+
     if (isQueued) {
       logger.debug(`User ${userId} already has pending profile update`);
       return next();
@@ -211,7 +211,7 @@ export const checkProfileUpdateNeeded = async (req: Request, res: Response, next
       (req.user as any).profileUpdateContext = {
         lastChecked: new Date(),
         endpoint: req.path,
-        method: req.method
+        method: req.method,
       };
     }
 
@@ -225,20 +225,25 @@ export const checkProfileUpdateNeeded = async (req: Request, res: Response, next
 /**
  * Error handling middleware for profile update operations
  */
-export const handleProfileUpdateErrors = (error: any, req: Request, res: Response, next: NextFunction) => {
+export const handleProfileUpdateErrors = (
+  error: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const userId = getUserId(req.user);
   const rating = (req as TasteProfileRequest).rating;
-  
+
   if (error.name === 'ProfileUpdateError') {
     logger.error(`Profile update error: ${error.message}`, {
       userId,
       ratingId: rating?.id,
-      stack: error.stack
+      stack: error.stack,
     });
-    
+
     // Don't fail the main request due to profile update errors
     return next();
   }
-  
+
   next(error);
-}; 
+};

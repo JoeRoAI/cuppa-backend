@@ -8,6 +8,48 @@ import crypto from 'crypto';
 // For mock implementation, store tokens
 const mockVerificationTokens: { [key: string]: { token: string; expires: Date } } = {};
 
+// Mock data for user stats
+const mockUserStats = {
+  checkIns: 23,
+  uniqueCoffees: 18,
+  badges: 5,
+  totalRatings: 42,
+  averageRating: 4.2,
+  favoriteBrewMethod: 'Pour Over',
+  monthlyCheckIns: 8,
+};
+
+// Mock data for user badges
+const mockUserBadges = [
+  {
+    id: 'coffee-explorer',
+    name: 'Coffee Explorer',
+    description: 'Tried coffee from 10 different regions',
+    icon: 'coffee',
+    color: '#E07A5F',
+    earnedAt: '2024-01-15T00:00:00Z',
+    category: 'Discovery',
+  },
+  {
+    id: 'check-in-champion',
+    name: 'Check-in Champion',
+    description: 'Completed 20 coffee shop check-ins',
+    icon: 'map-pin',
+    color: '#81B29A',
+    earnedAt: '2024-02-20T00:00:00Z',
+    category: 'Activity',
+  },
+  {
+    id: 'social-butterfly',
+    name: 'Social Butterfly',
+    description: 'Connected with 5 other coffee enthusiasts',
+    icon: 'star',
+    color: '#F2CC8F',
+    earnedAt: '2024-03-10T00:00:00Z',
+    category: 'Social',
+  },
+];
+
 /**
  * @desc    Get current user profile
  * @route   GET /api/profile
@@ -21,7 +63,7 @@ export const getProfile = async (
   try {
     if (usingMockDatabase) {
       // Find the mock user by ID
-      const userId = req.user?.id || req.user?._id;
+      const userId = req.user?.id;
       const mockUser = mockUsers.find((user) => user._id === userId);
 
       if (!mockUser) {
@@ -43,7 +85,7 @@ export const getProfile = async (
     }
 
     // Get real user from database (already available in req.user)
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
     const user = await User.findById(userId);
 
     if (!user) {
@@ -79,29 +121,14 @@ export const updateProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, preferences } = req.body;
-    const userId = req.user?.id || req.user?._id;
-
-    // Basic validation
-    if (!name && !email && !preferences) {
-      res.status(400).json({
-        success: false,
-        message: 'Please provide at least one field to update',
-      });
-      return;
-    }
-
-    // Create update fields object
-    const updateFields: any = {};
-    if (name) updateFields.name = name;
-    if (email) updateFields.email = email;
-    if (preferences) updateFields.preferences = preferences;
+    const userId = req.user?.id;
+    const { name, email, bio, location } = req.body;
 
     if (usingMockDatabase) {
-      // Find the mock user index
-      const mockUserIndex = mockUsers.findIndex((user) => user._id === userId);
+      // Find and update mock user
+      const userIndex = mockUsers.findIndex((user) => user._id === userId);
 
-      if (mockUserIndex === -1) {
+      if (userIndex === -1) {
         res.status(404).json({
           success: false,
           message: 'User not found',
@@ -109,58 +136,33 @@ export const updateProfile = async (
         return;
       }
 
-      // Update the mock user
-      const mockUser = mockUsers[mockUserIndex];
-
-      // Validate unique email
-      if (email && email !== mockUser.email) {
-        const emailExists = mockUsers.some((u) => u.email === email && u._id !== mockUser._id);
-        if (emailExists) {
-          res.status(400).json({
-            success: false,
-            message: 'Email already in use',
-          });
-          return;
-        }
-      }
-
-      // Update fields
-      mockUsers[mockUserIndex] = {
-        ...mockUser,
-        ...updateFields,
+      // Update mock user
+      mockUsers[userIndex] = {
+        ...mockUsers[userIndex],
+        name: name || mockUsers[userIndex].name,
+        email: email || mockUsers[userIndex].email,
+        bio: bio || mockUsers[userIndex].bio,
+        location: location || mockUsers[userIndex].location,
         updatedAt: new Date(),
       };
 
-      // Return updated user
-      const { password, ...updatedUser } = mockUsers[mockUserIndex];
+      const { password, ...userWithoutPassword } = mockUsers[userIndex];
 
       res.status(200).json({
         success: true,
-        data: updatedUser,
+        data: userWithoutPassword,
       });
       return;
     }
 
-    // Check if email is being changed and if it's already in use
-    if (email) {
-      const emailExists = await User.findOne({ email, _id: { $ne: userId } });
-      if (emailExists) {
-        res.status(400).json({
-          success: false,
-          message: 'Email already in use',
-        });
-        return;
-      }
-    }
-
-    // Update user in real database
-    const updatedUser = await User.findByIdAndUpdate(
+    // Update real user
+    const user = await User.findByIdAndUpdate(
       userId,
-      { $set: updateFields },
+      { name, email, bio, location },
       { new: true, runValidators: true }
     );
 
-    if (!updatedUser) {
+    if (!user) {
       res.status(404).json({
         success: false,
         message: 'User not found',
@@ -170,7 +172,7 @@ export const updateProfile = async (
 
     res.status(200).json({
       success: true,
-      data: updatedUser,
+      data: user,
     });
   } catch (error: any) {
     console.error(`Error in updateProfile: ${error.message}`);
@@ -178,6 +180,128 @@ export const updateProfile = async (
       success: false,
       message: 'Server error updating profile',
       error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Upload profile image
+ * @route   POST /api/profile/image
+ * @access  Private
+ */
+export const uploadProfileImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Handle profile image upload
+    // This would typically involve storing the file and updating the user record
+    res.json({
+      success: true,
+      message: 'Profile image uploaded successfully',
+      data: {
+        imageUrl: '/uploads/profile/default.jpg', // Mock URL
+      },
+    });
+  } catch (error: any) {
+    console.error('Error uploading profile image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload profile image',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+/**
+ * @desc    Update user preferences
+ * @route   PUT /api/profile/preferences
+ * @access  Private
+ */
+export const updatePreferences = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { preferences } = req.body;
+
+    // Handle preferences update
+    // This would typically involve updating the user record in the database
+    res.json({
+      success: true,
+      message: 'Preferences updated successfully',
+      data: {
+        preferences: preferences || {
+          favoriteBrewMethod: 'Pour Over',
+          preferredRoastLevel: 'Medium',
+          notifications: true,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error updating preferences:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update preferences',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+/**
+ * @desc    Get user statistics
+ * @route   GET /api/profile/stats
+ * @access  Private
+ */
+export const getUserStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // In a real application, you would fetch actual user stats from the database
+    // For now, return mock data
+    res.json({
+      success: true,
+      data: mockUserStats,
+      message: 'User stats retrieved successfully',
+    });
+  } catch (error: any) {
+    console.error('Error fetching user stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user stats',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+/**
+ * @desc    Get user badges
+ * @route   GET /api/profile/badges
+ * @access  Private
+ */
+export const getUserBadges = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // In a real application, you would fetch actual user badges from the database
+    // For now, return mock data
+    res.json({
+      success: true,
+      data: mockUserBadges,
+      message: 'User badges retrieved successfully',
+    });
+  } catch (error: any) {
+    console.error('Error fetching user badges:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user badges',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
@@ -194,7 +318,7 @@ export const updatePassword = async (
 ): Promise<void> => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
 
     // Validate required fields
     if (!currentPassword || !newPassword) {
@@ -297,7 +421,7 @@ export const requestEmailVerification = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
 
     if (usingMockDatabase) {
       // Find the mock user
@@ -454,7 +578,7 @@ export const requestPhoneVerification = async (
 ): Promise<void> => {
   try {
     const { phoneNumber } = req.body;
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
 
     if (!phoneNumber) {
       res.status(400).json({
@@ -514,7 +638,7 @@ export const verifyPhone = async (
   try {
     const { token } = req.params;
     const { phoneNumber } = req.body;
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
 
     if (!phoneNumber) {
       res.status(400).json({
@@ -601,7 +725,7 @@ export const requestAccountDeletion = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
 
     if (usingMockDatabase) {
       // Generate a deletion confirmation token
@@ -677,7 +801,7 @@ export const confirmAccountDeletion = async (
 ): Promise<void> => {
   try {
     const { token } = req.params;
-    const userId = req.user?.id || req.user?._id;
+    const userId = req.user?.id;
 
     if (usingMockDatabase) {
       // Check if token exists and is valid

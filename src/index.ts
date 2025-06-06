@@ -48,36 +48,37 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      
-      const allowedOrigins = process.env.NODE_ENV === 'production' 
-        ? [
-            'https://v0-cuppa-onboarding-design.vercel.app',
-            'https://cuppa-frontend.vercel.app',
-            'https://cuppa.vercel.app',
-            'https://cuppa.app',
-            'https://www.cuppa.app',
-          ]
-        : [
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'http://localhost:3002',
-            'http://localhost:3003',
-            'http://localhost:3004',
-            'http://localhost:3005',
-          ];
-      
+
+      const allowedOrigins =
+        process.env.NODE_ENV === 'production'
+          ? [
+              'https://v0-cuppa-onboarding-design.vercel.app',
+              'https://cuppa-frontend.vercel.app',
+              'https://cuppa.vercel.app',
+              'https://cuppa.app',
+              'https://www.cuppa.app',
+            ]
+          : [
+              'http://localhost:3000',
+              'http://localhost:3001',
+              'http://localhost:3002',
+              'http://localhost:3003',
+              'http://localhost:3004',
+              'http://localhost:3005',
+            ];
+
       // Check exact matches first
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      
+
       // In production, also allow any Vercel deployment URLs for our project
       if (process.env.NODE_ENV === 'production') {
         if (origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)) {
           return callback(null, true);
         }
       }
-      
+
       // Reject other origins
       callback(new Error('Not allowed by CORS'));
     },
@@ -90,32 +91,36 @@ app.use(
 // Manual CORS middleware as backup
 app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? [
-        'https://v0-cuppa-onboarding-design.vercel.app',
-        'https://cuppa-frontend.vercel.app',
-        'https://cuppa.vercel.app',
-        'https://cuppa.app',
-        'https://www.cuppa.app',
-      ]
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:3003',
-        'http://localhost:3004',
-        'http://localhost:3005',
-      ];
+  const allowedOrigins =
+    process.env.NODE_ENV === 'production'
+      ? [
+          'https://v0-cuppa-onboarding-design.vercel.app',
+          'https://cuppa-frontend.vercel.app',
+          'https://cuppa.vercel.app',
+          'https://cuppa.app',
+          'https://www.cuppa.app',
+        ]
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://localhost:3002',
+          'http://localhost:3003',
+          'http://localhost:3004',
+          'http://localhost:3005',
+        ];
 
   let isAllowed = false;
-  
+
   if (origin) {
     // Check exact matches
     if (allowedOrigins.includes(origin)) {
       isAllowed = true;
     }
     // In production, also allow any Vercel deployment URLs for our project
-    else if (process.env.NODE_ENV === 'production' && origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)) {
+    else if (
+      process.env.NODE_ENV === 'production' &&
+      origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)
+    ) {
       isAllowed = true;
     }
   }
@@ -253,13 +258,13 @@ const startServer = async () => {
 
     // Use PORT from environment (Render sets this) or config file
     const port = parseInt(process.env.PORT || config.PORT.toString(), 10);
-    
+
     // For Render, we need to bind to 0.0.0.0 explicitly
     httpServer.listen(port, '0.0.0.0', () => {
       console.log(`🚀 Server running in ${config.NODE_ENV} mode`);
       console.log(`📡 Listening on 0.0.0.0:${port}`);
       console.log(`🔗 Health check: http://0.0.0.0:${port}/health`);
-      
+
       if (config.NODE_ENV === 'production') {
         console.log(`🌐 Production API available at: https://cuppa-backend.onrender.com`);
       } else {

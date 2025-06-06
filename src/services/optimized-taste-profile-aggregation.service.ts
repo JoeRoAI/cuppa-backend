@@ -21,9 +21,9 @@ interface MockRedis {
 const Rating = {
   aggregate: (pipeline: any[]) => ({
     option: (opts: any) => ({
-      exec: async () => []
-    })
-  })
+      exec: async () => [],
+    }),
+  }),
 };
 
 const Coffee = {};
@@ -33,7 +33,7 @@ const TasteProfile = {};
 const logger = {
   info: (message: string, meta?: any) => console.log(message, meta),
   warn: (message: string, error?: any) => console.warn(message, error),
-  error: (message: string, error?: any) => console.error(message, error)
+  error: (message: string, error?: any) => console.error(message, error),
 };
 
 interface CacheConfig {
@@ -64,12 +64,18 @@ export class OptimizedTasteProfileAggregationService {
   constructor() {
     // Mock Redis implementation - replace with actual Redis when available
     this.redis = {
-      async get(key: string): Promise<string | null> { return null; },
+      async get(key: string): Promise<string | null> {
+        return null;
+      },
       async setex(key: string, ttl: number, value: string): Promise<void> {},
       async del(key: string): Promise<void> {},
-      async info(section: string): Promise<string> { return ''; },
-      async keys(pattern: string): Promise<string[]> { return []; },
-      async quit(): Promise<void> {}
+      async info(section: string): Promise<string> {
+        return '';
+      },
+      async keys(pattern: string): Promise<string[]> {
+        return [];
+      },
+      async quit(): Promise<void> {},
     };
 
     this.cacheConfig = {
@@ -90,15 +96,15 @@ export class OptimizedTasteProfileAggregationService {
    */
   async aggregateUserRatingData(userId: string): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       // Check cache first
       if (this.optimizationConfig.enableCaching) {
         const cachedData = await this.getCachedRatingData(userId);
         if (cachedData) {
-          logger.info(`Cache hit for user ${userId}`, { 
+          logger.info(`Cache hit for user ${userId}`, {
             duration: Date.now() - startTime,
-            source: 'cache' 
+            source: 'cache',
           });
           return cachedData;
         }
@@ -110,7 +116,7 @@ export class OptimizedTasteProfileAggregationService {
 
       // Optimized aggregation pipeline
       const pipeline = this.buildOptimizedAggregationPipeline(userId, cutoffDate);
-      
+
       // Execute aggregation with performance monitoring
       const ratingsWithCoffees = await Rating.aggregate(pipeline)
         .option({ allowDiskUse: true }) // Allow disk usage for large datasets
@@ -127,11 +133,10 @@ export class OptimizedTasteProfileAggregationService {
       logger.info(`Aggregation completed for user ${userId}`, {
         duration: Date.now() - startTime,
         ratingsCount: ratingsWithCoffees.length,
-        source: 'database'
+        source: 'database',
       });
 
       return processedData;
-
     } catch (error) {
       logger.error(`Error aggregating rating data for user ${userId}:`, error);
       throw error;
@@ -148,18 +153,18 @@ export class OptimizedTasteProfileAggregationService {
         $match: {
           userId: new Types.ObjectId(userId),
           createdAt: { $gte: cutoffDate },
-          rating: { $gte: 1, $lte: 5 } // Ensure valid ratings
-        }
+          rating: { $gte: 1, $lte: 5 }, // Ensure valid ratings
+        },
       },
 
       // Stage 2: Sort early to leverage index
       {
-        $sort: { createdAt: -1 }
+        $sort: { createdAt: -1 },
       },
 
       // Stage 3: Limit results to prevent memory issues
       {
-        $limit: this.optimizationConfig.maxRatingsPerQuery
+        $limit: this.optimizationConfig.maxRatingsPerQuery,
       },
 
       // Stage 4: Optimized lookup with projection pipeline
@@ -178,19 +183,19 @@ export class OptimizedTasteProfileAggregationService {
                 roastLevel: 1,
                 flavorProfile: 1,
                 // Only include essential fields
-                _id: 1
-              }
-            }
-          ]
-        }
+                _id: 1,
+              },
+            },
+          ],
+        },
       },
 
       // Stage 5: Unwind coffee data
       {
         $unwind: {
           path: '$coffee',
-          preserveNullAndEmptyArrays: false // Exclude ratings without coffee data
-        }
+          preserveNullAndEmptyArrays: false, // Exclude ratings without coffee data
+        },
       },
 
       // Stage 6: Project only necessary fields
@@ -204,8 +209,8 @@ export class OptimizedTasteProfileAggregationService {
           'coffee.origin': 1,
           'coffee.processingMethod': 1,
           'coffee.roastLevel': 1,
-          'coffee.flavorProfile': 1
-        }
+          'coffee.flavorProfile': 1,
+        },
       },
 
       // Stage 7: Add computed fields for analysis
@@ -217,13 +222,13 @@ export class OptimizedTasteProfileAggregationService {
               {
                 $divide: [
                   { $subtract: [new Date(), '$createdAt'] },
-                  1000 * 60 * 60 * 24 * 30 // 30-day decay factor
-                ]
-              }
-            ]
-          }
-        }
-      }
+                  1000 * 60 * 60 * 24 * 30, // 30-day decay factor
+                ],
+              },
+            ],
+          },
+        },
+      },
     ];
   }
 
@@ -253,7 +258,7 @@ export class OptimizedTasteProfileAggregationService {
     const processingMethods = new Map<string, { sum: number; count: number }>();
     const roastLevels = new Map<string, { sum: number; count: number }>();
 
-    batch.forEach(rating => {
+    batch.forEach((rating) => {
       const coffee = rating.coffee;
       const weight = rating.ratingWeight || 1;
 
@@ -263,8 +268,8 @@ export class OptimizedTasteProfileAggregationService {
           if (typeof value === 'number') {
             const current = flavorProfiles.get(flavor) || { sum: 0, count: 0 };
             flavorProfiles.set(flavor, {
-              sum: current.sum + (value * weight),
-              count: current.count + weight
+              sum: current.sum + value * weight,
+              count: current.count + weight,
             });
           }
         });
@@ -274,8 +279,8 @@ export class OptimizedTasteProfileAggregationService {
       if (coffee.origin) {
         const current = origins.get(coffee.origin) || { sum: 0, count: 0 };
         origins.set(coffee.origin, {
-          sum: current.sum + (rating.rating * weight),
-          count: current.count + weight
+          sum: current.sum + rating.rating * weight,
+          count: current.count + weight,
         });
       }
 
@@ -283,8 +288,8 @@ export class OptimizedTasteProfileAggregationService {
       if (coffee.processingMethod) {
         const current = processingMethods.get(coffee.processingMethod) || { sum: 0, count: 0 };
         processingMethods.set(coffee.processingMethod, {
-          sum: current.sum + (rating.rating * weight),
-          count: current.count + weight
+          sum: current.sum + rating.rating * weight,
+          count: current.count + weight,
         });
       }
 
@@ -292,8 +297,8 @@ export class OptimizedTasteProfileAggregationService {
       if (coffee.roastLevel) {
         const current = roastLevels.get(coffee.roastLevel) || { sum: 0, count: 0 };
         roastLevels.set(coffee.roastLevel, {
-          sum: current.sum + (rating.rating * weight),
-          count: current.count + weight
+          sum: current.sum + rating.rating * weight,
+          count: current.count + weight,
         });
       }
     });
@@ -303,7 +308,7 @@ export class OptimizedTasteProfileAggregationService {
       origins,
       processingMethods,
       roastLevels,
-      ratingsCount: batch.length
+      ratingsCount: batch.length,
     };
   }
 
@@ -316,16 +321,16 @@ export class OptimizedTasteProfileAggregationService {
       origins: new Map<string, { sum: number; count: number }>(),
       processingMethods: new Map<string, { sum: number; count: number }>(),
       roastLevels: new Map<string, { sum: number; count: number }>(),
-      totalRatings: 0
+      totalRatings: 0,
     };
 
-    batches.forEach(batch => {
+    batches.forEach((batch) => {
       // Combine flavor profiles
       batch.flavorProfiles.forEach((value: { sum: number; count: number }, key: string) => {
         const current = combined.flavorProfiles.get(key) || { sum: 0, count: 0 };
         combined.flavorProfiles.set(key, {
           sum: current.sum + value.sum,
-          count: current.count + value.count
+          count: current.count + value.count,
         });
       });
 
@@ -334,7 +339,7 @@ export class OptimizedTasteProfileAggregationService {
         const current = combined.origins.get(key) || { sum: 0, count: 0 };
         combined.origins.set(key, {
           sum: current.sum + value.sum,
-          count: current.count + value.count
+          count: current.count + value.count,
         });
       });
 
@@ -343,7 +348,7 @@ export class OptimizedTasteProfileAggregationService {
         const current = combined.processingMethods.get(key) || { sum: 0, count: 0 };
         combined.processingMethods.set(key, {
           sum: current.sum + value.sum,
-          count: current.count + value.count
+          count: current.count + value.count,
         });
       });
 
@@ -352,7 +357,7 @@ export class OptimizedTasteProfileAggregationService {
         const current = combined.roastLevels.get(key) || { sum: 0, count: 0 };
         combined.roastLevels.set(key, {
           sum: current.sum + value.sum,
-          count: current.count + value.count
+          count: current.count + value.count,
         });
       });
 
@@ -366,7 +371,7 @@ export class OptimizedTasteProfileAggregationService {
       processingMethods: this.mapToAverages(combined.processingMethods),
       roastLevels: this.mapToAverages(combined.roastLevels),
       totalRatings: combined.totalRatings,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     };
   }
 
@@ -388,17 +393,17 @@ export class OptimizedTasteProfileAggregationService {
     try {
       const cacheKey = `${this.cacheConfig.keyPrefix}${userId}`;
       const cachedData = await this.redis.get(cacheKey);
-      
+
       if (cachedData) {
         const parsed = JSON.parse(cachedData);
-        
+
         // Check if cache is still fresh
         const cacheAge = Date.now() - new Date(parsed.lastUpdated).getTime();
         if (cacheAge < this.cacheConfig.ttl * 1000) {
           return parsed;
         }
       }
-      
+
       return null;
     } catch (error) {
       logger.warn(`Cache read error for user ${userId}:`, error);
@@ -412,11 +417,7 @@ export class OptimizedTasteProfileAggregationService {
   private async cacheRatingData(userId: string, data: any): Promise<void> {
     try {
       const cacheKey = `${this.cacheConfig.keyPrefix}${userId}`;
-      await this.redis.setex(
-        cacheKey,
-        this.cacheConfig.ttl,
-        JSON.stringify(data)
-      );
+      await this.redis.setex(cacheKey, this.cacheConfig.ttl, JSON.stringify(data));
     } catch (error) {
       logger.warn(`Cache write error for user ${userId}:`, error);
     }
@@ -442,12 +443,12 @@ export class OptimizedTasteProfileAggregationService {
     try {
       const cacheInfo = await this.redis.info('memory');
       const cacheKeys = await this.redis.keys(`${this.cacheConfig.keyPrefix}*`);
-      
+
       return {
         cacheSize: cacheKeys.length,
         memoryUsage: cacheInfo,
         optimizationConfig: this.optimizationConfig,
-        cacheConfig: this.cacheConfig
+        cacheConfig: this.cacheConfig,
       };
     } catch (error) {
       logger.error('Error getting performance metrics:', error);
@@ -463,4 +464,4 @@ export class OptimizedTasteProfileAggregationService {
   }
 }
 
-export default OptimizedTasteProfileAggregationService; 
+export default OptimizedTasteProfileAggregationService;

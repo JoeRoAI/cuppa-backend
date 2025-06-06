@@ -20,27 +20,27 @@ interface UserFeatures {
     averageSessionLength: number;
     preferredTimeOfDay: string[];
     preferredDayOfWeek: number[];
-    
+
     // Preference features
     preferredRoastLevels: Array<{ roastLevel: string; score: number }>;
     preferredOrigins: Array<{ origin: string; score: number }>;
     preferredProcessingMethods: Array<{ method: string; score: number }>;
     preferredFlavorNotes: Array<{ note: string; score: number }>;
-    
+
     // Engagement features
     averageRating: number;
     ratingVariance: number;
     purchaseRate: number;
     favoriteRate: number;
-    
+
     // Temporal features
     seasonalPreferences: Record<string, number>; // season -> preference score
     trendingInterests: Array<{ feature: string; trend: 'increasing' | 'decreasing' | 'stable' }>;
-    
+
     // Diversity features
     diversityScore: number; // how diverse their preferences are
     explorationRate: number; // rate of trying new things
-    
+
     // Social features
     socialInfluence: number; // how much they follow others
     influenceScore: number; // how much they influence others
@@ -58,27 +58,27 @@ interface CoffeeFeatures {
     totalRatings: number;
     averageRating: number;
     ratingCount: number;
-    
+
     // Engagement features
     viewToPurchaseRate: number;
     favoriteRate: number;
     shareRate: number;
-    
+
     // Temporal features
     popularityTrend: 'increasing' | 'decreasing' | 'stable';
     seasonalPopularity: Record<string, number>;
     peakHours: number[];
-    
+
     // Content features
     roastLevel: string;
     origin: string;
     processingMethod: string;
     flavorNotes: string[];
     priceRange: string;
-    
+
     // Similarity features
     similarCoffees: Array<{ coffeeId: mongoose.Types.ObjectId; similarity: number }>;
-    
+
     // Quality features
     qualityScore: number; // derived from ratings and reviews
     consistencyScore: number; // rating variance
@@ -96,16 +96,16 @@ interface InteractionFeatures {
     dayOfWeek: number;
     season: string;
     deviceType: string;
-    
+
     // Sequence features
     sessionPosition: number; // position in session
     previousInteractions: string[]; // last N interaction types
     timeSinceLastInteraction: number; // minutes
-    
+
     // User state features
     userMood: string; // derived from recent interactions
     explorationMode: boolean; // whether user is exploring
-    
+
     // Item state features
     itemPopularityAtTime: number;
     itemTrendingScore: number;
@@ -134,7 +134,7 @@ class FeatureEngineeringService extends EventEmitter {
     forceRefresh = false
   ): Promise<UserFeatures> {
     const cacheKey = `user_features_${userId}`;
-    
+
     // Check cache first
     if (!forceRefresh && this.featureCache.has(cacheKey)) {
       const cached = this.featureCache.get(cacheKey)!;
@@ -158,19 +158,19 @@ class FeatureEngineeringService extends EventEmitter {
 
     // Extract behavioral features
     const behavioralFeatures = this.extractBehavioralFeatures(interactions);
-    
+
     // Extract preference features
     const preferenceFeatures = await this.extractPreferenceFeatures(userId, interactions);
-    
+
     // Extract engagement features
     const engagementFeatures = this.extractEngagementFeatures(interactions);
-    
+
     // Extract temporal features
     const temporalFeatures = this.extractTemporalFeatures(interactions);
-    
+
     // Extract diversity features
     const diversityFeatures = this.extractDiversityFeatures(interactions);
-    
+
     // Extract social features
     const socialFeatures = await this.extractSocialFeatures(userId);
 
@@ -183,42 +183,50 @@ class FeatureEngineeringService extends EventEmitter {
         averageSessionLength: behavioralFeatures.averageSessionLength || 0,
         preferredTimeOfDay: behavioralFeatures.preferredTimeOfDay || [],
         preferredDayOfWeek: behavioralFeatures.preferredDayOfWeek || [],
-        
+
         // Preference features
         preferredRoastLevels: preferenceFeatures.preferredRoastLevels || [],
         preferredOrigins: preferenceFeatures.preferredOrigins || [],
         preferredProcessingMethods: preferenceFeatures.preferredProcessingMethods || [],
         preferredFlavorNotes: preferenceFeatures.preferredFlavorNotes || [],
-        
+
         // Engagement features
         averageRating: engagementFeatures.averageRating || 0,
         ratingVariance: engagementFeatures.ratingVariance || 0,
         purchaseRate: engagementFeatures.purchaseRate || 0,
         favoriteRate: engagementFeatures.favoriteRate || 0,
-        
+
         // Temporal features
-        seasonalPreferences: temporalFeatures.seasonalPreferences || { spring: 0.25, summer: 0.25, fall: 0.25, winter: 0.25 },
+        seasonalPreferences: temporalFeatures.seasonalPreferences || {
+          spring: 0.25,
+          summer: 0.25,
+          fall: 0.25,
+          winter: 0.25,
+        },
         trendingInterests: temporalFeatures.trendingInterests || [],
-        
+
         // Diversity features
         diversityScore: diversityFeatures.diversityScore || 0,
         explorationRate: diversityFeatures.explorationRate || 0,
-        
+
         // Social features
         socialInfluence: socialFeatures.socialInfluence || 0.5,
-        influenceScore: socialFeatures.influenceScore || 0.5
+        influenceScore: socialFeatures.influenceScore || 0.5,
       },
       lastUpdated: new Date(),
-      version: 1
+      version: 1,
     };
 
     // Cache the features
     this.featureCache.set(cacheKey, {
       data: userFeatures,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
-    this.emit('userFeaturesExtracted', { userId, featureCount: Object.keys(userFeatures.features).length });
+    this.emit('userFeaturesExtracted', {
+      userId,
+      featureCount: Object.keys(userFeatures.features).length,
+    });
 
     return userFeatures;
   }
@@ -229,31 +237,37 @@ class FeatureEngineeringService extends EventEmitter {
    */
   private extractBehavioralFeatures(interactions: any[]): Partial<UserFeatures['features']> {
     const now = new Date();
-    const daysSinceFirst = Math.max(1, (now.getTime() - new Date(interactions[interactions.length - 1].timestamp).getTime()) / (1000 * 60 * 60 * 24));
-    
+    const daysSinceFirst = Math.max(
+      1,
+      (now.getTime() - new Date(interactions[interactions.length - 1].timestamp).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
     // Group interactions by session (within 30 minutes)
     const sessions = this.groupInteractionsBySessions(interactions);
-    const avgSessionLength = sessions.reduce((sum, session) => sum + session.length, 0) / sessions.length;
+    const avgSessionLength =
+      sessions.reduce((sum, session) => sum + session.length, 0) / sessions.length;
 
     // Time preferences
     const timeOfDayCount: Record<string, number> = {};
     const dayOfWeekCount: Record<number, number> = {};
 
-    interactions.forEach(interaction => {
-      const timeOfDay = interaction.metadata?.timeOfDay || this.getTimeOfDay(new Date(interaction.timestamp));
+    interactions.forEach((interaction) => {
+      const timeOfDay =
+        interaction.metadata?.timeOfDay || this.getTimeOfDay(new Date(interaction.timestamp));
       const dayOfWeek = interaction.metadata?.dayOfWeek || new Date(interaction.timestamp).getDay();
-      
+
       timeOfDayCount[timeOfDay] = (timeOfDayCount[timeOfDay] || 0) + 1;
       dayOfWeekCount[dayOfWeek] = (dayOfWeekCount[dayOfWeek] || 0) + 1;
     });
 
     const preferredTimeOfDay = Object.entries(timeOfDayCount)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 2)
       .map(([time]) => time);
 
     const preferredDayOfWeek = Object.entries(dayOfWeekCount)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([day]) => parseInt(day));
 
@@ -262,7 +276,7 @@ class FeatureEngineeringService extends EventEmitter {
       interactionFrequency: interactions.length / daysSinceFirst,
       averageSessionLength: avgSessionLength,
       preferredTimeOfDay,
-      preferredDayOfWeek
+      preferredDayOfWeek,
     };
   }
 
@@ -275,48 +289,53 @@ class FeatureEngineeringService extends EventEmitter {
     interactions: any[]
   ): Promise<Partial<UserFeatures['features']>> {
     // Get coffee details for interactions
-    const coffeeIds = [...new Set(interactions.map(i => i.coffeeId))];
+    const coffeeIds = [...new Set(interactions.map((i) => i.coffeeId))];
     const coffees = await Coffee.find({ _id: { $in: coffeeIds } }).lean();
-    const coffeeMap = new Map(coffees.map(c => [c._id.toString(), c]));
+    const coffeeMap = new Map(coffees.map((c) => [c._id.toString(), c]));
 
     // Weight interactions by type and recency
     const weightedPreferences: Record<string, Record<string, number>> = {
       roastLevels: {},
       origins: {},
       processingMethods: {},
-      flavorNotes: {}
+      flavorNotes: {},
     };
 
     interactions.forEach((interaction, index) => {
       const coffee = coffeeMap.get(interaction.coffeeId.toString());
       if (!coffee) return;
 
-      const weight = this.getInteractionWeight(interaction) * this.getRecencyWeight(index, interactions.length);
+      const weight =
+        this.getInteractionWeight(interaction) * this.getRecencyWeight(index, interactions.length);
 
       // Roast levels
       if (coffee.roastLevel) {
-        weightedPreferences.roastLevels[coffee.roastLevel] = 
+        weightedPreferences.roastLevels[coffee.roastLevel] =
           (weightedPreferences.roastLevels[coffee.roastLevel] || 0) + weight;
       }
 
       // Origins - use country from origin object
       if (coffee.origin && coffee.origin.country) {
         const originKey = coffee.origin.country;
-        weightedPreferences.origins[originKey] = 
+        weightedPreferences.origins[originKey] =
           (weightedPreferences.origins[originKey] || 0) + weight;
       }
 
       // Processing methods - use method from processingDetails
       if (coffee.processingDetails && coffee.processingDetails.method) {
         const methodKey = coffee.processingDetails.method;
-        weightedPreferences.processingMethods[methodKey] = 
+        weightedPreferences.processingMethods[methodKey] =
           (weightedPreferences.processingMethods[methodKey] || 0) + weight;
       }
 
       // Flavor notes - use flavorNotes from flavorProfile
-      if (coffee.flavorProfile && coffee.flavorProfile.flavorNotes && Array.isArray(coffee.flavorProfile.flavorNotes)) {
+      if (
+        coffee.flavorProfile &&
+        coffee.flavorProfile.flavorNotes &&
+        Array.isArray(coffee.flavorProfile.flavorNotes)
+      ) {
         coffee.flavorProfile.flavorNotes.forEach((note: string) => {
-          weightedPreferences.flavorNotes[note] = 
+          weightedPreferences.flavorNotes[note] =
             (weightedPreferences.flavorNotes[note] || 0) + weight;
         });
       }
@@ -347,7 +366,7 @@ class FeatureEngineeringService extends EventEmitter {
       preferredRoastLevels,
       preferredOrigins,
       preferredProcessingMethods,
-      preferredFlavorNotes
+      preferredFlavorNotes,
     };
   }
 
@@ -356,18 +375,19 @@ class FeatureEngineeringService extends EventEmitter {
    * @private
    */
   private extractEngagementFeatures(interactions: any[]): Partial<UserFeatures['features']> {
-    const ratings = interactions.filter(i => i.interactionType === 'rating' && i.value);
-    const purchases = interactions.filter(i => i.interactionType === 'purchase');
-    const favorites = interactions.filter(i => i.interactionType === 'favorite');
-    const views = interactions.filter(i => i.interactionType === 'view');
+    const ratings = interactions.filter((i) => i.interactionType === 'rating' && i.value);
+    const purchases = interactions.filter((i) => i.interactionType === 'purchase');
+    const favorites = interactions.filter((i) => i.interactionType === 'favorite');
+    const views = interactions.filter((i) => i.interactionType === 'view');
 
-    const averageRating = ratings.length > 0 
-      ? ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length 
-      : 0;
+    const averageRating =
+      ratings.length > 0 ? ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length : 0;
 
-    const ratingVariance = ratings.length > 1
-      ? ratings.reduce((sum, r) => sum + Math.pow(r.value - averageRating, 2), 0) / (ratings.length - 1)
-      : 0;
+    const ratingVariance =
+      ratings.length > 1
+        ? ratings.reduce((sum, r) => sum + Math.pow(r.value - averageRating, 2), 0) /
+          (ratings.length - 1)
+        : 0;
 
     const purchaseRate = views.length > 0 ? purchases.length / views.length : 0;
     const favoriteRate = views.length > 0 ? favorites.length / views.length : 0;
@@ -376,7 +396,7 @@ class FeatureEngineeringService extends EventEmitter {
       averageRating,
       ratingVariance,
       purchaseRate,
-      favoriteRate
+      favoriteRate,
     };
   }
 
@@ -387,8 +407,8 @@ class FeatureEngineeringService extends EventEmitter {
   private extractTemporalFeatures(interactions: any[]): Partial<UserFeatures['features']> {
     // Seasonal preferences
     const seasonalCount: Record<string, number> = { spring: 0, summer: 0, fall: 0, winter: 0 };
-    
-    interactions.forEach(interaction => {
+
+    interactions.forEach((interaction) => {
       const season = this.getSeason(new Date(interaction.timestamp));
       seasonalCount[season]++;
     });
@@ -400,13 +420,11 @@ class FeatureEngineeringService extends EventEmitter {
     });
 
     // Trending interests (simplified - would need more sophisticated analysis)
-    const trendingInterests = [
-      { feature: 'exploration', trend: 'stable' as const }
-    ];
+    const trendingInterests = [{ feature: 'exploration', trend: 'stable' as const }];
 
     return {
       seasonalPreferences,
-      trendingInterests
+      trendingInterests,
     };
   }
 
@@ -415,17 +433,17 @@ class FeatureEngineeringService extends EventEmitter {
    * @private
    */
   private extractDiversityFeatures(interactions: any[]): Partial<UserFeatures['features']> {
-    const uniqueCoffees = new Set(interactions.map(i => i.coffeeId.toString()));
+    const uniqueCoffees = new Set(interactions.map((i) => i.coffeeId.toString()));
     const diversityScore = uniqueCoffees.size / interactions.length;
-    
+
     // Calculate exploration rate (new coffees in recent interactions)
     const recentInteractions = interactions.slice(0, Math.min(100, interactions.length));
-    const recentUniqueCoffees = new Set(recentInteractions.map(i => i.coffeeId.toString()));
+    const recentUniqueCoffees = new Set(recentInteractions.map((i) => i.coffeeId.toString()));
     const explorationRate = recentUniqueCoffees.size / recentInteractions.length;
 
     return {
       diversityScore,
-      explorationRate
+      explorationRate,
     };
   }
 
@@ -433,11 +451,13 @@ class FeatureEngineeringService extends EventEmitter {
    * Extract social features
    * @private
    */
-  private async extractSocialFeatures(userId: mongoose.Types.ObjectId): Promise<Partial<UserFeatures['features']>> {
+  private async extractSocialFeatures(
+    userId: mongoose.Types.ObjectId
+  ): Promise<Partial<UserFeatures['features']>> {
     // Simplified social features - would need social connection data
     return {
       socialInfluence: 0.5,
-      influenceScore: 0.5
+      influenceScore: 0.5,
     };
   }
 
@@ -467,10 +487,10 @@ class FeatureEngineeringService extends EventEmitter {
         diversityScore: 0,
         explorationRate: 0,
         socialInfluence: 0.5,
-        influenceScore: 0.5
+        influenceScore: 0.5,
       },
       lastUpdated: new Date(),
-      version: 1
+      version: 1,
     };
   }
 
@@ -487,7 +507,9 @@ class FeatureEngineeringService extends EventEmitter {
       if (index === 0) {
         currentSession = [interaction];
       } else {
-        const timeDiff = new Date(interactions[index - 1].timestamp).getTime() - new Date(interaction.timestamp).getTime();
+        const timeDiff =
+          new Date(interactions[index - 1].timestamp).getTime() -
+          new Date(interaction.timestamp).getTime();
         if (timeDiff > sessionTimeout) {
           sessions.push(currentSession);
           currentSession = [interaction];
@@ -517,7 +539,7 @@ class FeatureEngineeringService extends EventEmitter {
       review: 0.6,
       click: 0.4,
       view: 0.3,
-      search: 0.2
+      search: 0.2,
     };
     return weights[interaction.interactionType] || 0.1;
   }
@@ -579,14 +601,16 @@ class FeatureEngineeringService extends EventEmitter {
    */
   async batchExtractUserFeatures(userIds: mongoose.Types.ObjectId[]): Promise<UserFeatures[]> {
     const results: UserFeatures[] = [];
-    
+
     for (let i = 0; i < userIds.length; i += this.BATCH_SIZE) {
       const batch = userIds.slice(i, i + this.BATCH_SIZE);
-      const batchPromises = batch.map(userId => this.extractUserFeatures(userId));
+      const batchPromises = batch.map((userId) => this.extractUserFeatures(userId));
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
-      
-      logger.info(`Processed feature extraction batch ${Math.floor(i / this.BATCH_SIZE) + 1}/${Math.ceil(userIds.length / this.BATCH_SIZE)}`);
+
+      logger.info(
+        `Processed feature extraction batch ${Math.floor(i / this.BATCH_SIZE) + 1}/${Math.ceil(userIds.length / this.BATCH_SIZE)}`
+      );
     }
 
     return results;
@@ -604,9 +628,9 @@ class FeatureEngineeringService extends EventEmitter {
     return {
       cacheSize: this.featureCache.size,
       cacheHitRate: 0, // Would need to track hits/misses
-      lastExtractionTime: new Date() // Simplified
+      lastExtractionTime: new Date(), // Simplified
     };
   }
 }
 
-export default new FeatureEngineeringService(); 
+export default new FeatureEngineeringService();
