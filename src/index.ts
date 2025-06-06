@@ -31,7 +31,7 @@ import activityFeedRoutes from './routes/activity-feed.routes';
 import engagementRoutes from './routes/engagement.routes';
 import privacySettingsRoutes from './routes/privacy-settings.routes';
 import notificationRoutes from './routes/notification.routes';
-// import userRoutes from './routes/user.routes';
+import userRoutes from './routes/user.routes';
 
 // Import initialization functions
 import { initializeSync } from './controllers/product-sync.controller';
@@ -53,6 +53,7 @@ app.use(
         process.env.NODE_ENV === 'production'
           ? [
               'https://v0-cuppa-onboarding-design.vercel.app',
+              'https://v0-cuppa-onboarding-design-9r8zbttw5.vercel.app',
               'https://cuppa-frontend.vercel.app',
               'https://cuppa.vercel.app',
               'https://cuppa.app',
@@ -74,7 +75,7 @@ app.use(
 
       // In production, also allow any Vercel deployment URLs for our project
       if (process.env.NODE_ENV === 'production') {
-        if (origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)) {
+        if (origin.match(/^https:\/\/v0-cuppa-onboarding-design(-[a-z0-9]+)?\.vercel\.app$/)) {
           return callback(null, true);
         }
       }
@@ -95,6 +96,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     process.env.NODE_ENV === 'production'
       ? [
           'https://v0-cuppa-onboarding-design.vercel.app',
+          'https://v0-cuppa-onboarding-design-9r8zbttw5.vercel.app',
           'https://cuppa-frontend.vercel.app',
           'https://cuppa.vercel.app',
           'https://cuppa.app',
@@ -119,7 +121,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     // In production, also allow any Vercel deployment URLs for our project
     else if (
       process.env.NODE_ENV === 'production' &&
-      origin.match(/^https:\/\/v0-cuppa-onboarding-design.*\.vercel\.app$/)
+      origin.match(/^https:\/\/v0-cuppa-onboarding-design(-[a-z0-9]+)?\.vercel\.app$/)
     ) {
       isAllowed = true;
     }
@@ -222,7 +224,7 @@ app.use('/api/activity-feed', activityFeedRoutes);
 app.use('/api/engagement', engagementRoutes);
 app.use('/api/privacy-settings', privacySettingsRoutes);
 app.use('/api/notifications', notificationRoutes);
-// app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
